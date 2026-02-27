@@ -3,20 +3,20 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.io.File;
+import java.math.BigInteger;
 
 public class UserInterface {
 
     private static JTable table = new JTable(new MainTableModel());
+
+    private static JTextField usIntField = new JTextField(15);
+    private static JTextField sIntField = new JTextField(15);
+    private static JTextField floatField = new JTextField(15);
+    private static JTextField doubleField = new JTextField(15);
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -104,12 +104,26 @@ public class UserInterface {
         table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
         ListSelectionModel selectionModel = table.getSelectionModel();
-        selectionModel.addListSelectionListener(new ListSelectionListener() {
+
+
+
+//        selectionModel.addListSelectionListener(new ListSelectionListener() {
+//            @Override
+//            public void valueChanged(ListSelectionEvent e) {
+////                int[] selectedRows = table.getSelectedRows();
+////                int[] selectedColumns = table.getSelectedColumns();
+////                TableModel tableModel = table.getModel();
+//                // TODO
+//
+//                printSelectedCells(table);
+//            }
+//        });
+
+        table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                int[] selectedRows = table.getSelectedRows();
-                // TODO
-
+                if (!e.getValueIsAdjusting())
+                    getValueOfSelectedCells(table);
             }
         });
 
@@ -133,6 +147,75 @@ public class UserInterface {
 
         return new JScrollPane(table);
     }
+
+
+    // -----------------------------------------------------------------
+    public static void getValueOfSelectedCells(JTable table) {
+        int[] selectedRows = table.getSelectedRows();
+        int[] selectedColumns = table.getSelectedColumns();
+
+        if (selectedRows.length == 1 && (selectedColumns.length == 2 || selectedColumns.length == 4 || selectedColumns.length == 8)) {
+            String selectedValue = "";
+            for (int i = 0; i < selectedColumns.length; i++) {
+                int row = selectedRows[0];
+                int column = selectedColumns[i];
+                Object value = table.getValueAt(row, column);
+
+                //System.out.println("row: " + row + " | column: " + column + " | value: " + value);
+                if (value != null) {
+                    selectedValue += value;
+                }
+            }
+            //System.out.println("full value: " + selectedValue);
+
+            //selectedValue = "FFFFFFFFFFFFFFFB";
+
+
+//            long l = Long.parseLong(selectedValue, 16);
+//
+//            Float f = Float.intBitsToFloat((int) l);
+//            Double d = Double.longBitsToDouble(l);
+//
+//            usIntField.setText(String.valueOf(Long.parseUnsignedLong(selectedValue, 16)));
+//            sIntField.setText(String.valueOf(Long.valueOf(selectedValue, 16).intValue()));
+//            floatField.setText(String.valueOf(f));
+//            doubleField.setText(String.valueOf(d));
+
+
+            // 2 bytes ok
+            selectedValue = "FFFB";
+            System.out.println("us: " + Integer.parseInt(selectedValue, 16));
+            System.out.println(" s: " + (short) Integer.parseInt(selectedValue, 16));
+            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
+            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
+
+            // 4 bytes ok
+            selectedValue = "AAAAFFFB";
+            System.out.println("\nus: " + Long.parseLong(selectedValue, 16));
+            System.out.println(" s: " + (int) Long.parseLong(selectedValue, 16));
+            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
+            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
+
+
+            // 8 bytes ok
+            selectedValue = "AAFFFFFAAFFFFFFB";
+            System.out.println("\nus: " + new BigInteger(selectedValue, 16));
+            System.out.println(" s: " + new BigInteger(selectedValue, 16).longValue());
+
+            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
+
+            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
+
+
+
+
+
+        }
+
+    }
+
+
+
 
     public static JPanel createRightSide() {
         JPanel rightPanel = new JPanel();
@@ -177,10 +260,7 @@ public class UserInterface {
         JLabel floatLabel = new JLabel("Float");
         JLabel doubleLabel = new JLabel("Double");
 
-        JTextField usIntField = new JTextField(Integer.toString(table.getColumnCount()), 15);
-        JTextField sIntField = new JTextField("text", 15);
-        JTextField floatField = new JTextField(15);
-        JTextField doubleField = new JTextField(15);
+
 
 
 

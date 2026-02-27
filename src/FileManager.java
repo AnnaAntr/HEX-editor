@@ -57,6 +57,7 @@ public class FileManager {
         }
 
         return String.format("%02X", b);
+        //return Integer.toHexString(b);
     }
 
 
