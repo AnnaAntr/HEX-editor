@@ -7,6 +7,8 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.math.BigInteger;
 
 public class UserInterface {
@@ -85,7 +87,6 @@ public class UserInterface {
     }
 
     public static JScrollPane createLeftSide() {
-        //JTable table = new JTable(new MyTableModel());
         table.setRowHeight(30);
         table.setGridColor(Color.GRAY);
 
@@ -95,29 +96,9 @@ public class UserInterface {
         col0.setMinWidth(20);
         col0.setPreferredWidth(30);
 
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        table.setDefaultRenderer(Object.class, centerRenderer);
-
         table.setColumnSelectionAllowed(true);
         table.setRowSelectionAllowed(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-
-        ListSelectionModel selectionModel = table.getSelectionModel();
-
-
-
-//        selectionModel.addListSelectionListener(new ListSelectionListener() {
-//            @Override
-//            public void valueChanged(ListSelectionEvent e) {
-////                int[] selectedRows = table.getSelectedRows();
-////                int[] selectedColumns = table.getSelectedColumns();
-////                TableModel tableModel = table.getModel();
-//                // TODO
-//
-//                printSelectedCells(table);
-//            }
-//        });
 
         table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -127,26 +108,22 @@ public class UserInterface {
             }
         });
 
+        DefaultTableCellRenderer cellRenderer = new HighlightAndTipCellRenderer();
+        cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        table.setDefaultRenderer(Object.class, cellRenderer);
 
-//        table.addMouseMotionListener(new MouseMotionAdapter() {
-//            @Override
-//            public void mouseMoved(MouseEvent e) {
-//                int row = table.rowAtPoint(e.getPoint());
-//                int column = table.columnAtPoint(e.getPoint());
-//                Object cellValue = table.getValueAt(row, column);
-//                //System.out.println(cellValue);
-//
-//                JToolTip cellTip = new JToolTip();
-//
-//            }
-//        });
-
-        table.getColumnModel().getColumn(0).setCellRenderer(new MainCellRenderer());
-
+        table.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                table.repaint();    // applying style
+            }
+        });
 
 
         return new JScrollPane(table);
     }
+
+
 
 
     // -----------------------------------------------------------------
@@ -168,8 +145,6 @@ public class UserInterface {
             }
             //System.out.println("full value: " + selectedValue);
 
-            //selectedValue = "FFFFFFFFFFFFFFFB";
-
 
 //            long l = Long.parseLong(selectedValue, 16);
 //
@@ -181,37 +156,74 @@ public class UserInterface {
 //            floatField.setText(String.valueOf(f));
 //            doubleField.setText(String.valueOf(d));
 
+            Object usInt = 0, sInt = 0;
+            float f = 0;
+            double d = .0;
 
-            // 2 bytes ok
-            selectedValue = "FFFB";
-            System.out.println("us: " + Integer.parseInt(selectedValue, 16));
-            System.out.println(" s: " + (short) Integer.parseInt(selectedValue, 16));
-            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
-            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
+            // TODO fix ???
+            try {
+                d = Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue());
+                f = Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16));
 
-            // 4 bytes ok
-            selectedValue = "AAAAFFFB";
-            System.out.println("\nus: " + Long.parseLong(selectedValue, 16));
-            System.out.println(" s: " + (int) Long.parseLong(selectedValue, 16));
-            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
-            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
+                switch (selectedColumns.length) {
+                    case 2:
+                        usInt = Integer.parseInt(selectedValue, 16);
+                        sInt = (short) Integer.parseInt(selectedValue, 16);
+                        break;
+
+                    case 4:
+                        usInt = Long.parseLong(selectedValue, 16);
+                        sInt = (int) Long.parseLong(selectedValue, 16);
+                        break;
+
+                    case 8:
+                        usInt = new BigInteger(selectedValue, 16);
+                        sInt = new BigInteger(selectedValue, 16).longValue();
+                        break;
+                }
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Number Format Exception");
+                // TODO handle exception
+            }
+
+            usIntField.setText(String.valueOf(usInt));
+            sIntField.setText(String.valueOf(sInt));
+            floatField.setText(String.valueOf(f));
+            doubleField.setText(String.valueOf(d));
 
 
-            // 8 bytes ok
-            selectedValue = "AAFFFFFAAFFFFFFB";
-            System.out.println("\nus: " + new BigInteger(selectedValue, 16));
-            System.out.println(" s: " + new BigInteger(selectedValue, 16).longValue());
-
-            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
-
-            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
-
-
-
-
+            // 2 bytes
+//            selectedValue = "FFFB";
+//            System.out.println("us: " + Integer.parseInt(selectedValue, 16));
+//            System.out.println(" s: " + (short) Integer.parseInt(selectedValue, 16));
+//            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
+//            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
+//
+//            // 4 bytes
+//            selectedValue = "AAAAFFFB";
+//            System.out.println("\nus: " + Long.parseLong(selectedValue, 16));
+//            System.out.println(" s: " + (int) Long.parseLong(selectedValue, 16));
+//            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
+//            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
+//
+//
+//            // 8 bytes
+//            selectedValue = "AAFFFFFAAFFFFFFB";
+//            System.out.println("\nus: " + new BigInteger(selectedValue, 16));
+//            System.out.println(" s: " + new BigInteger(selectedValue, 16).longValue());
+//
+//            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
+//
+//            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
 
         }
-
+        else {
+            usIntField.setText("");
+            sIntField.setText("");
+            floatField.setText("");
+            doubleField.setText("");
+        }
     }
 
 
@@ -251,18 +263,11 @@ public class UserInterface {
             }
         });
 
-
-        // TODO здесь будет просмотр значения блоков данных
-
         JLabel usIntLabel = new JLabel("Unsigned Int");
         //usIntLabel.setHorizontalAlignment(JLabel.LEFT);
         JLabel sIntLabel = new JLabel("Signed Int");
         JLabel floatLabel = new JLabel("Float");
         JLabel doubleLabel = new JLabel("Double");
-
-
-
-
 
         rightPanel.add(usIntLabel);
         rightPanel.add(usIntField);
@@ -290,16 +295,11 @@ public class UserInterface {
         //doubleField.setAlignmentX(Component.CENTER_ALIGNMENT);
         doubleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-
-
         Dimension minSize = new Dimension(5, 200);
         Dimension prefSize = new Dimension(5, 300);
         Dimension maxSize = new Dimension(Short.MAX_VALUE, 100);
 
         rightPanel.add(new Box.Filler(minSize, prefSize, maxSize));
-
-
-
 
         return rightPanel;
     }
@@ -369,17 +369,48 @@ class MainTableModel extends AbstractTableModel {
 //    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 //
 //    }
+
 }
 
-class MainCellRenderer extends DefaultTableCellRenderer {
-    @Override
+class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
+    private int hoverRow = -1;
+    private int hoverCol = -1;
+
     public Component getTableCellRendererComponent(JTable table, Object value,
-                                                   boolean isSelected, boolean hasFocus, int row, int column) {
-        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                                                   boolean isSelected, boolean hasFocus,
+                                                   int row, int column) {
+        Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-        if (value != null)
-            setToolTipText(String.valueOf(Integer.parseInt(value.toString(), 16)));
+        // если
+        if (row == hoverRow && column == hoverCol) {
+            c.setBackground(new Color(156, 197, 255));
+        }
+        else if (!isSelected) {
+            c.setBackground(table.getBackground());
+        }
 
-        return this;
+        // обновление позиции мыши
+        if (table.getMousePosition() == null) {
+            this.hoverRow = -1;
+            this.hoverCol = -1;
+        }
+        else {
+            try {
+                this.hoverRow = table.rowAtPoint(table.getMousePosition());
+                this.hoverCol = table.columnAtPoint(table.getMousePosition());
+            }
+            catch (NullPointerException e) {
+                System.out.println("null point");
+            }
+        }
+
+        // TODO fix
+        if (value != null) {
+            String tip = Integer.parseInt(value.toString(), 16) + " \n"  // unsigned
+                    + String.valueOf((short) Integer.parseInt(value.toString(), 16));   // signed
+            setToolTipText(tip);
+        }
+
+        return c;
     }
 }
