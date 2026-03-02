@@ -57,11 +57,22 @@ public class FileManager {
         }
 
         return String.format("%02X", b);
-        //return Integer.toHexString(b);
     }
 
 
-    public long getSize() {
+    public void writeOneByte(int position, byte b) {
+        try {
+            file.seek(position);
+            file.writeByte(b);
+//            file.writeUTF(b);
+        } catch (IOException e) {
+//            throw new RuntimeException(e);
+            System.out.println("error during writing byte");
+        }
+    }
+
+
+    public long getFileSize() {
         try {
             return file.length();
         } catch (IOException e) {

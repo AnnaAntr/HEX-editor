@@ -315,6 +315,11 @@ class MainTableModel extends AbstractTableModel {
 
     private FileManager fileManager = null;
 
+//    public void setRowCount(int newRowCount) {
+//        this.rowCount = newRowCount;
+//        fireTableStructureChanged();
+//    }
+
     public void setColumnCount(int newColumnCount) {
         this.columnCount = newColumnCount + 1;
         fireTableStructureChanged();
@@ -341,9 +346,10 @@ class MainTableModel extends AbstractTableModel {
             return rowIndex * (getColumnCount() - 1);
 
         if (fileManager != null) {
+            //long fileSize = fileManager.getFileSize();
             int position = rowIndex * (getColumnCount() - 1) + columnIndex - 1;
 
-            if (position < fileManager.getSize()) {
+            if (position < fileManager.getFileSize()) {
                 return fileManager.readOneByte(position);
             }
         }
@@ -365,12 +371,17 @@ class MainTableModel extends AbstractTableModel {
         return columnIndex != 0;
     }
 
-    //    @Override
-//    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-//
-//    }
+    @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        if (fileManager != null) {
+            int position = rowIndex * (getColumnCount() - 1) + columnIndex - 1;
+            fileManager.writeOneByte(position, Byte.parseByte(aValue.toString(), 16));
+            fireTableCellUpdated(rowIndex, columnIndex);
+        }
+    }
 
 }
+
 
 class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
     private int hoverRow = -1;
@@ -381,11 +392,12 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
                                                    int row, int column) {
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-        // если
+        // если курсор наведен на ячейку, то подсвечиваем ее
         if (row == hoverRow && column == hoverCol) {
             c.setBackground(new Color(156, 197, 255));
         }
-        else if (!isSelected) {
+//        else if (!isSelected) {
+        else {
             c.setBackground(table.getBackground());
         }
 
@@ -404,11 +416,18 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
             }
         }
 
-        // TODO fix
+        // TODO ??? сломалос...
         if (value != null) {
-            String tip = Integer.parseInt(value.toString(), 16) + " \n"  // unsigned
-                    + String.valueOf((short) Integer.parseInt(value.toString(), 16));   // signed
-            setToolTipText(tip);
+            try {
+                int intValue = Integer.parseInt(value.toString(), 16);
+                byte b = (byte) intValue;
+                String tip = String.valueOf(b) + " \n"  // signed
+                                        + (b & 0xFF);   // unsigned
+                setToolTipText(tip);
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Number format exception from tool tip");
+            }
         }
 
         return c;
