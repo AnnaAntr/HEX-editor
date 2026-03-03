@@ -36,7 +36,8 @@ public class UserInterface {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                tableModel.closeFile();
+                if (tableModel.getFileManager() != null)
+                    tableModel.getFileManager().closeFile();
             }
         });
 
@@ -48,24 +49,17 @@ public class UserInterface {
         frame.setSize(frameWidth, frameHeight);
         frame.setVisible(true);
 
-
         frame.setJMenuBar(createMenuBar());
-
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftSide(), createRightSide());
         splitPane.setDividerLocation((int) (frameWidth * 0.7));
         frame.add(splitPane);
-
-
-
     }
 
     public static JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
         JFileChooser fileChooser = new JFileChooser();
-
-
 
         JMenu file = new JMenu("Файл");
         JMenuItem open = new JMenuItem("Открыть");
@@ -85,9 +79,36 @@ public class UserInterface {
         });
 
 
+        JMenu edit = new JMenu("Редактирование");
+        JMenuItem delete = new JMenuItem("Удалить");
+        edit.add(delete);
+
+        delete.setMnemonic(KeyEvent.VK_DELETE);
+        delete.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int[] selectedRows = table.getSelectedRows();
+                int[] selectedColumns = table.getSelectedColumns();
+
+                if (selectedRows.length == 1) {
+                    if (selectedColumns.length == 1) {
+                        int position = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+                        tableModel.getFileManager().removeOneByte(position);
+                        tableModel.fireTableStructureChanged();
+                    }
+                    else {
+                        int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+                        int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
+                        tableModel.getFileManager().removeByteArray(start, end);
+                        tableModel.fireTableStructureChanged();
+                    }
+                }
+            }
+        });
 
 
         menuBar.add(file);
+        menuBar.add(edit);
 
         return menuBar;
     }
@@ -108,16 +129,17 @@ public class UserInterface {
         table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
         // кастомный рендерер ячеек
-        DefaultTableCellRenderer cellRenderer = new HighlightAndTipCellRenderer();
-        cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        table.setDefaultRenderer(Object.class, cellRenderer);
+        // TODO fix with selection
+//        DefaultTableCellRenderer cellRenderer = new HighlightAndTipCellRenderer();
+//        cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+//        table.setDefaultRenderer(Object.class, cellRenderer);
 
         // слушатель для выделенных ячеек
         columnModel.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting())
-                    getValueOfSelectedCells(table);
+                    getValueOfSelectedCells();
             }
         });
 
@@ -150,9 +172,7 @@ public class UserInterface {
     }
 
 
-
-    // -----------------------------------------------------------------
-    public static void getValueOfSelectedCells(JTable table) {
+    public static void getValueOfSelectedCells() {
         int[] selectedRows = table.getSelectedRows();
         int[] selectedColumns = table.getSelectedColumns();
 
@@ -252,8 +272,6 @@ public class UserInterface {
     }
 
 
-
-
     public static JPanel createRightSide() {
         JPanel rightPanel = new JPanel();
 
@@ -321,10 +339,9 @@ public class UserInterface {
         return rightPanel;
     }
 
-
-
 }
 
+// -------------------------------------------------------------------------------------------
 
 class MainTableModel extends AbstractTableModel {
 
@@ -354,12 +371,10 @@ class MainTableModel extends AbstractTableModel {
 
     public void setFirstVisibleRow(int firstVisibleRow) {
         this.firstVisibleRow = firstVisibleRow;
-        System.out.println("set first: " + this.firstVisibleRow);
     }
 
     public void setLastVisibleRow(int lastVisibleRow) {
         this.lastVisibleRow = lastVisibleRow;
-        System.out.println("set last: " + this.lastVisibleRow);
     }
 
     public void setColumnCount(int newColumnCount) {
@@ -371,16 +386,12 @@ class MainTableModel extends AbstractTableModel {
     public void setFileManager(String path) {
         this.fileManager = new FileManager(path);
         setTotalRowCount();
-
-        System.out.println("total rows: " + totalRowCount);
-
         fireTableStructureChanged();
     }
 
-    public void closeFile() {
-        fileManager.closeFile();
+    public FileManager getFileManager() {
+        return this.fileManager;
     }
-
 
     @Override
     public int getRowCount() {
@@ -449,6 +460,7 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
+
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         // если курсор наведен на ячейку, то подсвечиваем ее
