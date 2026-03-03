@@ -5,20 +5,20 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 import java.math.BigInteger;
 
 public class UserInterface {
 
     private static JTable table = new JTable(new MainTableModel());
+    private static MainTableModel tableModel = (MainTableModel) table.getModel();
+    private static TableColumnModel columnModel = table.getColumnModel();
 
     private static JTextField usIntField = new JTextField(15);
     private static JTextField sIntField = new JTextField(15);
     private static JTextField floatField = new JTextField(15);
     private static JTextField doubleField = new JTextField(15);
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -28,10 +28,17 @@ public class UserInterface {
         });
     }
 
-
     public static void createGUI() {
         JFrame frame = new JFrame("Frame");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // при закрытии окна закрываем файл
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                tableModel.closeFile();
+            }
+        });
 
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Dimension screenSize = toolkit.getScreenSize();
@@ -72,7 +79,6 @@ public class UserInterface {
                 if (userChoice == JFileChooser.APPROVE_OPTION) {
                     String filePath = fileChooser.getSelectedFile().getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
 
-                    MainTableModel tableModel = (MainTableModel) table.getModel();
                     tableModel.setFileManager(filePath);
                 }
             }
@@ -86,21 +92,28 @@ public class UserInterface {
         return menuBar;
     }
 
+
     public static JScrollPane createLeftSide() {
         table.setRowHeight(30);
         table.setGridColor(Color.GRAY);
 
-        TableColumn col0 = table.getColumnModel().getColumn(0);
-        //col0.setHeaderValue("");
+        TableColumn col0 = columnModel.getColumn(0);
         col0.setMaxWidth(30);
         col0.setMinWidth(20);
         col0.setPreferredWidth(30);
 
+        // режим выделения
         table.setColumnSelectionAllowed(true);
         table.setRowSelectionAllowed(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
-        table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        // кастомный рендерер ячеек
+        DefaultTableCellRenderer cellRenderer = new HighlightAndTipCellRenderer();
+        cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        table.setDefaultRenderer(Object.class, cellRenderer);
+
+        // слушатель для выделенных ячеек
+        columnModel.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting())
@@ -108,21 +121,33 @@ public class UserInterface {
             }
         });
 
-        DefaultTableCellRenderer cellRenderer = new HighlightAndTipCellRenderer();
-        cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        table.setDefaultRenderer(Object.class, cellRenderer);
-
+        // слушатель для подсветки ячейки под курсором
         table.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                table.repaint();    // applying style
+                table.repaint();
             }
         });
 
+        JScrollPane scrollPane = new JScrollPane(table);
+        JViewport viewport = scrollPane.getViewport();
 
-        return new JScrollPane(table);
+        // при прокрутке получаем и устанавливаем первый и последний видимый ряд
+        viewport.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                Point p = viewport.getViewPosition();
+                int row1 = table.rowAtPoint(p);
+                int row2 = table.rowAtPoint(new Point(p.x, p.y + viewport.getHeight()));
+                //System.out.println(p + " " + row1 + " | " + row2);
+
+                tableModel.setFirstVisibleRow(row1);
+                tableModel.setLastVisibleRow(row2);
+            }
+        });
+
+        return scrollPane;
     }
-
 
 
 
@@ -231,13 +256,6 @@ public class UserInterface {
 
     public static JPanel createRightSide() {
         JPanel rightPanel = new JPanel();
-        //rightPanel.setLayout(new BorderLayout(BorderLayout.CENTER));
-
-//        SpinnerModel spinnerModel = new SpinnerNumberModel(10, 2, 30, 1);
-//        JSpinner spinnerColumns = new JSpinner(spinnerModel);
-//
-//        rightPanel.add(new JLabel("Количество столбцов:"));
-//        rightPanel.add(spinnerColumns);
 
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.add(Box.createHorizontalGlue());
@@ -258,7 +276,6 @@ public class UserInterface {
             public void stateChanged(ChangeEvent e) throws NullPointerException {
                 int newValue = (int) spinnerColumns.getModel().getValue();
 
-                MainTableModel tableModel = (MainTableModel) table.getModel();
                 tableModel.setColumnCount(newValue);
             }
         });
@@ -310,29 +327,64 @@ public class UserInterface {
 
 
 class MainTableModel extends AbstractTableModel {
-    private int rowCount = 40;
+
     private int columnCount = 11;
+    private final int visibleRowCount = 40;
+    private int totalRowCount = visibleRowCount;
+
+    private int firstVisibleRow = 0;
+    private int lastVisibleRow = firstVisibleRow + visibleRowCount;
 
     private FileManager fileManager = null;
 
-//    public void setRowCount(int newRowCount) {
-//        this.rowCount = newRowCount;
-//        fireTableStructureChanged();
-//    }
+
+    private int calculateTotalRowCount() {
+        if (fileManager != null) {
+            long fileSize = fileManager.getFileSize();
+            int bytesPerRow = columnCount - 1;
+
+            return (int) (fileSize / bytesPerRow) + 1;
+        }
+        return 0;
+    }
+
+    public void setTotalRowCount() {
+        this.totalRowCount = calculateTotalRowCount();
+    }
+
+    public void setFirstVisibleRow(int firstVisibleRow) {
+        this.firstVisibleRow = firstVisibleRow;
+        System.out.println("set first: " + this.firstVisibleRow);
+    }
+
+    public void setLastVisibleRow(int lastVisibleRow) {
+        this.lastVisibleRow = lastVisibleRow;
+        System.out.println("set last: " + this.lastVisibleRow);
+    }
 
     public void setColumnCount(int newColumnCount) {
         this.columnCount = newColumnCount + 1;
+        setTotalRowCount();
         fireTableStructureChanged();
     }
 
     public void setFileManager(String path) {
         this.fileManager = new FileManager(path);
+        setTotalRowCount();
+
+        System.out.println("total rows: " + totalRowCount);
+
         fireTableStructureChanged();
     }
 
+    public void closeFile() {
+        fileManager.closeFile();
+    }
+
+
     @Override
     public int getRowCount() {
-        return rowCount;
+        return totalRowCount;
     }
 
     @Override
@@ -342,19 +394,27 @@ class MainTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
+        // номер строки
         if (columnIndex == 0)
-            return rowIndex * (getColumnCount() - 1);
+            return rowIndex * (columnCount - 1);
 
+
+        // если открыт файл
         if (fileManager != null) {
-            //long fileSize = fileManager.getFileSize();
-            int position = rowIndex * (getColumnCount() - 1) + columnIndex - 1;
+            // long fileSize = fileManager.getFileSize();
+            int position = rowIndex * (columnCount - 1) + columnIndex - 1;
 
-            if (position < fileManager.getFileSize()) {
-                return fileManager.readOneByte(position);
+            // если последний видимый ряд = -1, то он самый последний в таблице
+            if (lastVisibleRow == -1)
+                setLastVisibleRow(totalRowCount);
+
+            // если текущий row попадает в [firstVisible - n; lastVisible + n], то читаем из файла
+            if (rowIndex >= (firstVisibleRow - visibleRowCount / 2) && rowIndex <= (lastVisibleRow + visibleRowCount / 2)) {
+                if (position < fileManager.getFileSize()) {
+                    return fileManager.readOneByte(position);
+                }
             }
         }
-
-        // TODO добавлять строки, если файл большой
 
         return null;
     }
@@ -374,12 +434,11 @@ class MainTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (fileManager != null) {
-            int position = rowIndex * (getColumnCount() - 1) + columnIndex - 1;
+            int position = rowIndex * (columnCount - 1) + columnIndex - 1;
             fileManager.writeOneByte(position, Byte.parseByte(aValue.toString(), 16));
             fireTableCellUpdated(rowIndex, columnIndex);
         }
     }
-
 }
 
 
@@ -412,7 +471,7 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
                 this.hoverCol = table.columnAtPoint(table.getMousePosition());
             }
             catch (NullPointerException e) {
-                System.out.println("null point");
+                //System.out.println("null point");
             }
         }
 

@@ -9,8 +9,6 @@ public class FileManager {
 
     private RandomAccessFile file;
 
-    // "C:\\Users\\aantrushina\\Documents\\test.txt"
-
     FileManager(String path) {
         try {
             file = new RandomAccessFile(path, "rw");
@@ -50,7 +48,7 @@ public class FileManager {
 
         try {
             file.seek(position);
-            b = file.read();
+            b = file.readByte();
             //System.out.println(b);
         } catch (IOException e) {
             System.out.println("error during reading byte");
