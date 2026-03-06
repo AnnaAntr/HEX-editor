@@ -61,6 +61,7 @@ public class UserInterface {
 
         JFileChooser fileChooser = new JFileChooser();
 
+        // ---------------------------------------------------------------
         JMenu file = new JMenu("Файл");
         JMenuItem open = new JMenuItem("Открыть");
         file.add(open);
@@ -78,12 +79,12 @@ public class UserInterface {
             }
         });
 
-
+        // ---------------------------------------------------------------
         JMenu edit = new JMenu("Редактирование");
         JMenuItem delete = new JMenuItem("Удалить");
         edit.add(delete);
 
-        delete.setMnemonic(KeyEvent.VK_DELETE);
+        delete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK));
         delete.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -105,6 +106,8 @@ public class UserInterface {
                 }
             }
         });
+
+
 
 
         menuBar.add(file);
@@ -129,10 +132,9 @@ public class UserInterface {
         table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
         // кастомный рендерер ячеек
-        // TODO fix with selection
-//        DefaultTableCellRenderer cellRenderer = new HighlightAndTipCellRenderer();
-//        cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-//        table.setDefaultRenderer(Object.class, cellRenderer);
+        DefaultTableCellRenderer cellRenderer = new HighlightAndTipCellRenderer();
+        cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        table.setDefaultRenderer(Object.class, cellRenderer);
 
         // слушатель для выделенных ячеек
         columnModel.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -464,13 +466,13 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         // если курсор наведен на ячейку, то подсвечиваем ее
-        if (row == hoverRow && column == hoverCol) {
+        if (row == hoverRow && column == hoverCol && !isSelected)
             c.setBackground(new Color(156, 197, 255));
-        }
-//        else if (!isSelected) {
-        else {
+        // если ячейка выделена, то ей назначается цвет выделения
+        else if (isSelected)
+            c.setBackground(table.getSelectionBackground());
+        else
             c.setBackground(table.getBackground());
-        }
 
         // обновление позиции мыши
         if (table.getMousePosition() == null) {
