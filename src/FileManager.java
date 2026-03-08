@@ -3,21 +3,17 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class FileManager {
 
     private RandomAccessFile file;
-    //private long fileSize;
 
     FileManager(String path) {
         try {
             file = new RandomAccessFile(path, "rw");
-            //fileSize = getFileSize();
-//        } catch (FileNotFoundException e) {
-//            System.out.println("error in constructor");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("error in constructor");
         }
     }
 
@@ -32,10 +28,8 @@ public class FileManager {
 
 
 
-    public List<String> readByteArray(/*int numberOfBytes, int start*/) {
+ /*   public List<String> readByteArray(*//*int numberOfBytes, int start*//*) {
         List<String> bytes = new ArrayList<>();
-
-
         try {
             int b;
             while ((b = file.read()) != -1) {
@@ -53,7 +47,7 @@ public class FileManager {
         closeFile();
 
         return bytes;
-    }
+    }*/
 
 
     public String readOneByte(int position) {
@@ -70,7 +64,6 @@ public class FileManager {
         return String.format("%02X", b);
     }
 
-
     public void writeOneByte(int position, byte b) {
         try {
             file.seek(position);
@@ -81,7 +74,6 @@ public class FileManager {
             System.out.println("error during writing byte");
         }
     }
-
 
     public void removeOneByte(int position) {
         List<Byte> toRewrite = new ArrayList<>();
@@ -108,7 +100,7 @@ public class FileManager {
         }
     }
 
-    public  void removeByteArray(int start, int end) {
+    public void removeByteArray(int start, int end) {
         List<Byte> toRewrite = new ArrayList<>();
 
         try {
@@ -133,6 +125,31 @@ public class FileManager {
         }
     }
 
+    public void insertBytes(int position, int number) {
+        List<Byte> toRewrite = new ArrayList<>();
+
+        try {
+            long fileSize = file.length();
+            position += 1;
+
+            file.seek(position);
+            for (long i = position; i < fileSize ; i++)
+                toRewrite.add(file.readByte());
+
+            file.setLength(fileSize + number);
+
+            file.seek(position);
+            for (int i = 0; i < number; i++)
+                file.writeByte(0);
+
+            for (Byte b : toRewrite)
+                file.writeByte(b);
+        }
+        catch (IOException e) {
+//            throw new RuntimeException(e);
+            System.out.println("error during deleting byte");
+        }
+    }
 
     public void closeFile() {
         try {

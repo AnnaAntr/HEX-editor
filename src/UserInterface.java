@@ -8,8 +8,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.math.BigInteger;
 
+import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
+
 public class UserInterface {
 
+    private static JFrame frame = new JFrame("HEX-editor");
     private static JTable table = new JTable(new MainTableModel());
     private static MainTableModel tableModel = (MainTableModel) table.getModel();
     private static TableColumnModel columnModel = table.getColumnModel();
@@ -19,6 +22,8 @@ public class UserInterface {
     private static JTextField floatField = new JTextField(15);
     private static JTextField doubleField = new JTextField(15);
 
+    private static int frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
+    private static int frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -29,7 +34,7 @@ public class UserInterface {
     }
 
     public static void createGUI() {
-        JFrame frame = new JFrame("Frame");
+        //JFrame frame = new JFrame("Frame");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // при закрытии окна закрываем файл
@@ -41,10 +46,10 @@ public class UserInterface {
             }
         });
 
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Dimension screenSize = toolkit.getScreenSize();
-        int frameWidth = (int) (screenSize.width * 0.6);
-        int frameHeight = (int) (screenSize.height * 0.6);
+//        Toolkit toolkit = Toolkit.getDefaultToolkit();
+//        Dimension screenSize = toolkit.getScreenSize();
+//        int frameWidth = (int) (screenSize.width * 0.6);
+//        int frameHeight = (int) (screenSize.height * 0.6);
 
         frame.setSize(frameWidth, frameHeight);
         frame.setVisible(true);
@@ -66,6 +71,7 @@ public class UserInterface {
         JMenuItem open = new JMenuItem("Открыть");
         file.add(open);
 
+        // TODO replace dialogs
         open.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -91,29 +97,79 @@ public class UserInterface {
                 int[] selectedRows = table.getSelectedRows();
                 int[] selectedColumns = table.getSelectedColumns();
 
-                if (selectedRows.length == 1) {
+                if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
                     if (selectedColumns.length == 1) {
                         int position = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
                         tableModel.getFileManager().removeOneByte(position);
-                        tableModel.fireTableStructureChanged();
                     }
                     else {
                         int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
                         int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
                         tableModel.getFileManager().removeByteArray(start, end);
-                        tableModel.fireTableStructureChanged();
                     }
+                    tableModel.fireTableStructureChanged();
                 }
             }
         });
 
+        // ---------------------------------------------------------------
+        JMenuItem insert = new JMenuItem("Добавить");
+        edit.add(insert);
 
+        insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
+        insert.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int[] selectedRows = table.getSelectedRows();
+                int[] selectedColumns = table.getSelectedColumns();
 
+                // реагируем только если выделена 1 ячейка
+                if (selectedColumns.length == 1 && selectedRows.length == 1 && tableModel.getFileManager() != null) {
+                    int position = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+                    createInsertDialog(position);
+                }
+            }
+        });
 
         menuBar.add(file);
         menuBar.add(edit);
 
         return menuBar;
+    }
+
+
+    public static void createInsertDialog(int position) {
+        JDialog dialog = new JDialog(frame, "Добавление байт", true);
+        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        dialog.setLayout(new BorderLayout());
+
+        JLabel labelInsert = new JLabel("Введите количество байт для вставки:");
+        JTextField bytesToInsertField = new JTextField(5);
+        JPanel panelTop = new JPanel();
+        panelTop.add(labelInsert);
+        panelTop.add(bytesToInsertField);
+
+        JButton buttonInsert = new JButton("Добавить");
+        JPanel panelBottom = new JPanel();
+        panelBottom.add(buttonInsert);
+
+        buttonInsert.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // получаем количество байт для вставки
+                int numberOfBytes = Integer.parseInt(bytesToInsertField.getText());
+                tableModel.getFileManager().insertBytes(position, numberOfBytes);
+                tableModel.fireTableStructureChanged();
+                // закрываем диалоговое окно
+                dialog.dispose();
+            }
+        });
+
+        dialog.add(panelTop, BorderLayout.CENTER);
+        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
+
+        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
+        dialog.setVisible(true);
     }
 
 
