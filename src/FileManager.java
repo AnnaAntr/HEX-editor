@@ -139,11 +139,11 @@ public class FileManager {
         }
         catch (IOException e) {
 //            throw new RuntimeException(e);
-            System.out.println("error during deleting byte");
+            System.out.println("error during inserting byte");
         }
     }
 
-    public void replaceBytes(int start, String copiedData) {
+    public void pasteBytesWithReplacement(int start, String copiedData) {
         // парсим строку по пробелам
         String[] bytes = copiedData.split("\\s+");
 
@@ -163,8 +163,30 @@ public class FileManager {
     public void pasteBytesWithShift(int start, String copiedData) {
         // парсим строку по пробелам
         String[] bytes = copiedData.split("\\s+");
+        List<Byte> toRewrite = new ArrayList<>();
 
+        try {
+            long fileSize = file.length();
+            // вставляем на следующую позицию после выделенного байта
+            start += 1;
 
+            file.seek(start);
+            for (long i = start; i < fileSize ; i++)
+                toRewrite.add(file.readByte());
+
+            file.setLength(fileSize + bytes.length);
+
+            file.seek(start);
+            for (int i = 0; i < bytes.length; i++)
+                file.writeByte(Integer.parseInt(bytes[i], 16));
+
+            for (Byte b : toRewrite)
+                file.writeByte(b);
+        }
+        catch (IOException e) {
+//            throw new RuntimeException(e);
+            System.out.println("error during pasting with shift");
+        }
     }
 
 

@@ -9,8 +9,6 @@ import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 
@@ -345,10 +343,9 @@ public class UserInterface {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (shiftPasteButton.isSelected())
-                    //tableModel.getFileManager().replaceBytes(start, copiedData);
-                    System.out.println("shift");
+                    tableModel.getFileManager().pasteBytesWithShift(start, copiedData);
                 else
-                    tableModel.getFileManager().replaceBytes(start, copiedData);
+                    tableModel.getFileManager().pasteBytesWithReplacement(start, copiedData);
 
                 tableModel.fireTableStructureChanged();
 
