@@ -143,6 +143,33 @@ public class FileManager {
         }
     }
 
+    public void replaceBytes(int start, String copiedData) {
+        // парсим строку по пробелам
+        String[] bytes = copiedData.split("\\s+");
+
+        try {
+            file.seek(start);
+            int end = bytes.length;
+
+            for (int i = 0; i < end; i++)
+                file.writeByte(Integer.parseInt(bytes[i], 16));
+        }
+        catch (IOException e) {
+//            throw new RuntimeException(e);
+            System.out.println("error during replacing");
+        }
+    }
+
+    public void pasteBytesWithShift(int start, String copiedData) {
+        // парсим строку по пробелам
+        String[] bytes = copiedData.split("\\s+");
+
+
+    }
+
+
+
+
     public void closeFile() {
         try {
             file.close();

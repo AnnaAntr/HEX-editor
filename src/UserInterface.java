@@ -5,8 +5,12 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 
@@ -24,6 +28,8 @@ public class UserInterface {
 
     private static int frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
     private static int frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
+
+    private static Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -97,7 +103,7 @@ public class UserInterface {
                     int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
                     int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
 
-                    createDeleteDialog(start, end);
+                    createDeleteDialog(start, end, 0);
                 }
             }
         });
@@ -121,6 +127,90 @@ public class UserInterface {
             }
         });
 
+        // ---------------------------------------------------------------
+        JMenuItem copy = new JMenuItem("Копировать");
+        edit.add(copy);
+
+        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        copy.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
+                    String selectedValue = getStringOfSelectedCells();
+
+                    StringSelection stringSelection = new StringSelection(selectedValue);
+                    clipboard.setContents(stringSelection, null);
+                }
+            }
+        });
+
+        // ---------------------------------------------------------------
+        JMenuItem cut = new JMenuItem("Вырезать");
+        edit.add(cut);
+
+        // TODO shortcut
+        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
+        cut.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int[] selectedRows = table.getSelectedRows();
+                int[] selectedColumns = table.getSelectedColumns();
+
+                if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
+                    String selectedValue = getStringOfSelectedCells();
+
+                    StringSelection stringSelection = new StringSelection(selectedValue);
+                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    clipboard.setContents(stringSelection, null);
+
+                    // delete
+                    int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+                    int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
+
+                    createDeleteDialog(start, end, 1);
+                }
+            }
+        });
+
+        // ---------------------------------------------------------------
+        JMenuItem paste = new JMenuItem("Вставить");
+        edit.add(paste);
+
+        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+        paste.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Transferable clipData = clipboard.getContents(this);
+
+                try {
+                    if (clipData != null && clipData.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                        String copiedData = (String) clipData.getTransferData(DataFlavor.stringFlavor);
+
+//                        // парсим строку
+//                        String[] bytes = copiedData.split(" ");
+
+                        // create dialog
+                        int[] selectedRows = table.getSelectedRows();
+                        int[] selectedColumns = table.getSelectedColumns();
+
+                        if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
+                            int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+                            //int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
+
+                            createPasteDialog(start, copiedData);
+                        }
+
+
+
+
+                    }
+                }
+                catch (UnsupportedFlavorException | IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
 
 
 
@@ -130,6 +220,9 @@ public class UserInterface {
 
         return menuBar;
     }
+
+
+
 
 
     public static JPopupMenu createPopupMenu() {
@@ -145,8 +238,12 @@ public class UserInterface {
     }
 
 
-    public static void createDeleteDialog(int start, int end) {
-        JDialog dialog = new JDialog(frame, "Удаление байт", true);
+    public static void createDeleteDialog(int start, int end, int cut) {
+        String title = "Удаление байт";
+        if (cut == 1)
+            title = "Вырезка байт";
+
+        JDialog dialog = new JDialog(frame, title, true);
         dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout());
 
@@ -160,7 +257,11 @@ public class UserInterface {
         panelRadio.add(shiftDeleteButton);
         panelRadio.add(zeroDeleteButton);
 
-        JButton buttonDelete = new JButton("Удалить");
+        String btn = "Удалить";
+        if (cut == 1)
+            btn = "Вырезать";
+
+        JButton buttonDelete = new JButton(btn);
         JPanel panelBottom = new JPanel();
         panelBottom.add(buttonDelete);
 
@@ -221,6 +322,49 @@ public class UserInterface {
     }
 
 
+    public static void createPasteDialog(int start, String copiedData) {
+        JDialog dialog = new JDialog(frame, "Вставка из буфера", true);
+        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        dialog.setLayout(new BorderLayout());
+
+        ButtonGroup buttonGroup = new ButtonGroup();
+        JRadioButton shiftPasteButton = new JRadioButton("Со сдвигом", true);
+        JRadioButton replacementPasteButton = new JRadioButton("С заменой");
+        buttonGroup.add(shiftPasteButton);
+        buttonGroup.add(replacementPasteButton);
+
+        JPanel panelRadio = new JPanel();
+        panelRadio.add(shiftPasteButton);
+        panelRadio.add(replacementPasteButton);
+
+        JButton buttonDelete = new JButton("Вставить");
+        JPanel panelBottom = new JPanel();
+        panelBottom.add(buttonDelete);
+
+        buttonDelete.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (shiftPasteButton.isSelected())
+                    //tableModel.getFileManager().replaceBytes(start, copiedData);
+                    System.out.println("shift");
+                else
+                    tableModel.getFileManager().replaceBytes(start, copiedData);
+
+                tableModel.fireTableStructureChanged();
+
+                // закрываем диалоговое окно
+                dialog.dispose();
+            }
+        });
+
+        dialog.add(panelRadio, BorderLayout.CENTER);
+        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
+
+        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
+        dialog.setVisible(true);
+    }
+
+
     public static JScrollPane createLeftSide() {
         table.setRowHeight(30);
         table.setGridColor(Color.GRAY);
@@ -245,7 +389,7 @@ public class UserInterface {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting())
-                    getValueOfSelectedCells();
+                    showValueOfSelectedCells();
             }
         });
 
@@ -278,7 +422,27 @@ public class UserInterface {
     }
 
 
-    public static void getValueOfSelectedCells() {
+    public static String getStringOfSelectedCells() {
+        int[] selectedRows = table.getSelectedRows();
+        int[] selectedColumns = table.getSelectedColumns();
+
+        String selectedValue = "";
+        for (int i = 0; i < selectedColumns.length; i++) {
+            int row = selectedRows[0];
+            int column = selectedColumns[i];
+            Object value = table.getValueAt(row, column);
+
+            if (value != null) {
+                selectedValue += value;
+                selectedValue += " ";
+            }
+        }
+
+        return selectedValue;
+    }
+
+
+    public static void showValueOfSelectedCells() {
         int[] selectedRows = table.getSelectedRows();
         int[] selectedColumns = table.getSelectedColumns();
 
