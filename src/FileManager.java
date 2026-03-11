@@ -75,37 +75,12 @@ public class FileManager {
         }
     }
 
-    public void removeOneByte(int position) {
+    public void removeBytesWithShift(int start, int end) {
         List<Byte> toRewrite = new ArrayList<>();
 
         try {
             long fileSize = file.length();
-            // записываем в массив все, что после удаляемого байта
-            file.seek(position + 1);
-            for (long i = position + 1; i < fileSize; i++)
-                toRewrite.add(file.readByte());
-
-            // перезаписываем файл
-            file.seek(position);
-            for (Byte b : toRewrite)
-                file.writeByte(b);
-
-            // обрезаем файл на 1 байт
-            file.setLength(fileSize - 1);
-        }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during deleting byte");
-            e.printStackTrace();
-        }
-    }
-
-    public void removeByteArray(int start, int end) {
-        List<Byte> toRewrite = new ArrayList<>();
-
-        try {
-            long fileSize = file.length();
-            // записываем в массив все, что между началом и концом удаляемого блока
+            // записываем в массив все, что после удаляемого блока
             file.seek(end + 1);
             for (long i = end + 1; i < fileSize; i++)
                 toRewrite.add(file.readByte());
@@ -125,11 +100,28 @@ public class FileManager {
         }
     }
 
+    public void removeBytesWithZero(int start, int end) {
+        List<Byte> toRewrite = new ArrayList<>();
+
+        try {
+            // записываем в массив все, что после удаляемого блока
+            file.seek(start);
+            for (long i = start; i <= end; i++)
+                file.writeByte(0);
+        }
+        catch (IOException e) {
+//            throw new RuntimeException(e);
+            System.out.println("error during removing array");
+            e.printStackTrace();
+        }
+    }
+
     public void insertBytes(int position, int number) {
         List<Byte> toRewrite = new ArrayList<>();
 
         try {
             long fileSize = file.length();
+            // вставляем на следующую позицию после выделенного байта
             position += 1;
 
             file.seek(position);

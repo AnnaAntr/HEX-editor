@@ -46,15 +46,11 @@ public class UserInterface {
             }
         });
 
-//        Toolkit toolkit = Toolkit.getDefaultToolkit();
-//        Dimension screenSize = toolkit.getScreenSize();
-//        int frameWidth = (int) (screenSize.width * 0.6);
-//        int frameHeight = (int) (screenSize.height * 0.6);
-
         frame.setSize(frameWidth, frameHeight);
         frame.setVisible(true);
 
         frame.setJMenuBar(createMenuBar());
+        table.setComponentPopupMenu(createPopupMenu());
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftSide(), createRightSide());
         splitPane.setDividerLocation((int) (frameWidth * 0.7));
@@ -98,22 +94,16 @@ public class UserInterface {
                 int[] selectedColumns = table.getSelectedColumns();
 
                 if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
-                    if (selectedColumns.length == 1) {
-                        int position = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
-                        tableModel.getFileManager().removeOneByte(position);
-                    }
-                    else {
-                        int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
-                        int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
-                        tableModel.getFileManager().removeByteArray(start, end);
-                    }
-                    tableModel.fireTableStructureChanged();
+                    int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+                    int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
+
+                    createDeleteDialog(start, end);
                 }
             }
         });
 
         // ---------------------------------------------------------------
-        JMenuItem insert = new JMenuItem("Добавить");
+        JMenuItem insert = new JMenuItem("Вставить");
         edit.add(insert);
 
         insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
@@ -131,6 +121,10 @@ public class UserInterface {
             }
         });
 
+
+
+
+
         menuBar.add(file);
         menuBar.add(edit);
 
@@ -138,8 +132,62 @@ public class UserInterface {
     }
 
 
+    public static JPopupMenu createPopupMenu() {
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem popupDelete = new JMenuItem("Удалить");
+        JMenuItem popupInsert = new JMenuItem("Вставить");
+
+        popupMenu.add(popupDelete);
+        popupMenu.add(popupInsert);
+
+
+        return popupMenu;
+    }
+
+
+    public static void createDeleteDialog(int start, int end) {
+        JDialog dialog = new JDialog(frame, "Удаление байт", true);
+        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        dialog.setLayout(new BorderLayout());
+
+        ButtonGroup buttonGroup = new ButtonGroup();
+        JRadioButton shiftDeleteButton = new JRadioButton("Со сдвигом", true);
+        JRadioButton zeroDeleteButton = new JRadioButton("С обнулением");
+        buttonGroup.add(shiftDeleteButton);
+        buttonGroup.add(zeroDeleteButton);
+
+        JPanel panelRadio = new JPanel();
+        panelRadio.add(shiftDeleteButton);
+        panelRadio.add(zeroDeleteButton);
+
+        JButton buttonDelete = new JButton("Удалить");
+        JPanel panelBottom = new JPanel();
+        panelBottom.add(buttonDelete);
+
+        buttonDelete.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (shiftDeleteButton.isSelected())
+                    tableModel.getFileManager().removeBytesWithShift(start, end);
+                else
+                    tableModel.getFileManager().removeBytesWithZero(start, end);
+                tableModel.fireTableStructureChanged();
+
+                // закрываем диалоговое окно
+                dialog.dispose();
+            }
+        });
+
+        dialog.add(panelRadio, BorderLayout.CENTER);
+        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
+
+        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
+        dialog.setVisible(true);
+    }
+
+
     public static void createInsertDialog(int position) {
-        JDialog dialog = new JDialog(frame, "Добавление байт", true);
+        JDialog dialog = new JDialog(frame, "Вставка байт", true);
         dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout());
 
@@ -149,7 +197,7 @@ public class UserInterface {
         panelTop.add(labelInsert);
         panelTop.add(bytesToInsertField);
 
-        JButton buttonInsert = new JButton("Добавить");
+        JButton buttonInsert = new JButton("Вставить");
         JPanel panelBottom = new JPanel();
         panelBottom.add(buttonInsert);
 
