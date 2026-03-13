@@ -26,30 +26,6 @@ public class FileManager {
         }
     }
 
-
-
- /*   public List<String> readByteArray(*//*int numberOfBytes, int start*//*) {
-        List<String> bytes = new ArrayList<>();
-        try {
-            int b;
-            while ((b = file.read()) != -1) {
-
-                bytes.add(String.format("%02X", b));
-
-                //System.out.println(b + " | hex: " + String.format("%02X", b));
-            }
-
-        } catch (IOException e) {
-            System.out.println("error during reading array");
-        }
-
-
-        closeFile();
-
-        return bytes;
-    }*/
-
-
     public String readOneByte(int position) {
         int b = -1;
 
@@ -101,8 +77,6 @@ public class FileManager {
     }
 
     public void removeBytesWithZero(int start, int end) {
-        List<Byte> toRewrite = new ArrayList<>();
-
         try {
             // записываем в массив все, что после удаляемого блока
             file.seek(start);
@@ -116,24 +90,28 @@ public class FileManager {
         }
     }
 
-    public void insertBytes(int position, int number) {
+    public void insertBytes(int start, int number) {
         List<Byte> toRewrite = new ArrayList<>();
 
         try {
             long fileSize = file.length();
             // вставляем на следующую позицию после выделенного байта
-            position += 1;
+            start += 1;
 
-            file.seek(position);
-            for (long i = position; i < fileSize ; i++)
+            // запоминаем все, что после выделенного байта
+            file.seek(start);
+            for (long i = start; i < fileSize ; i++)
                 toRewrite.add(file.readByte());
 
+            // увеличиваем размер файла на количество вставляемых байт
             file.setLength(fileSize + number);
 
-            file.seek(position);
+            // начиная с позиции вставки записываем нули
+            file.seek(start);
             for (int i = 0; i < number; i++)
                 file.writeByte(0);
 
+            // после нулей дописываем все, что было после выделенного байта
             for (Byte b : toRewrite)
                 file.writeByte(b);
         }
@@ -151,6 +129,7 @@ public class FileManager {
             file.seek(start);
             int end = bytes.length;
 
+            // начиная со стартовой позиции заменяем байты на данные из буфера
             for (int i = 0; i < end; i++)
                 file.writeByte(Integer.parseInt(bytes[i], 16));
         }
@@ -170,16 +149,20 @@ public class FileManager {
             // вставляем на следующую позицию после выделенного байта
             start += 1;
 
+            // запоминаем все, что после выделенного байта
             file.seek(start);
             for (long i = start; i < fileSize ; i++)
                 toRewrite.add(file.readByte());
 
+            // увеличиваем размер файла на количество вставляемых байт
             file.setLength(fileSize + bytes.length);
 
+            // начиная с позиции вставки записываем вставляемые байты
             file.seek(start);
             for (int i = 0; i < bytes.length; i++)
                 file.writeByte(Integer.parseInt(bytes[i], 16));
 
+            // после них дописываем все, что было после позиции вставки
             for (Byte b : toRewrite)
                 file.writeByte(b);
         }
@@ -188,9 +171,6 @@ public class FileManager {
             System.out.println("error during pasting with shift");
         }
     }
-
-
-
 
     public void closeFile() {
         try {

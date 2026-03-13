@@ -38,7 +38,6 @@ public class UserInterface {
     }
 
     public static void createGUI() {
-        //JFrame frame = new JFrame("Frame");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // при закрытии окна закрываем файл
@@ -182,25 +181,16 @@ public class UserInterface {
 
                 try {
                     if (clipData != null && clipData.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                        // получаем данные из буфера в виде строки
                         String copiedData = (String) clipData.getTransferData(DataFlavor.stringFlavor);
 
-//                        // парсим строку
-//                        String[] bytes = copiedData.split(" ");
-
-                        // create dialog
                         int[] selectedRows = table.getSelectedRows();
                         int[] selectedColumns = table.getSelectedColumns();
 
                         if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
                             int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
-                            //int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
-
                             createPasteDialog(start, copiedData);
                         }
-
-
-
-
                     }
                 }
                 catch (UnsupportedFlavorException | IOException ex) {
