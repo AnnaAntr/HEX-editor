@@ -4,11 +4,14 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
+import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.text.ParseException;
+import java.util.List;
 
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 
@@ -50,7 +53,7 @@ public class UserInterface {
         });
 
         frame.setSize(frameWidth, frameHeight);
-        frame.setVisible(true);
+        frame.setLocationRelativeTo(null);
 
         frame.setJMenuBar(createMenuBar());
         table.setComponentPopupMenu(createPopupMenu());
@@ -58,19 +61,20 @@ public class UserInterface {
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftSide(), createRightSide());
         splitPane.setDividerLocation((int) (frameWidth * 0.7));
         frame.add(splitPane);
+
+        frame.setVisible(true);
     }
 
     public static JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-
         JFileChooser fileChooser = new JFileChooser();
+        JMenu edit = new JMenu("Редактирование");
 
         // ---------------------------------------------------------------
         JMenu file = new JMenu("Файл");
         JMenuItem open = new JMenuItem("Открыть");
         file.add(open);
 
-        // TODO replace dialogs
         open.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -85,7 +89,6 @@ public class UserInterface {
         });
 
         // ---------------------------------------------------------------
-        JMenu edit = new JMenu("Редактирование");
         JMenuItem delete = new JMenuItem("Удалить");
         edit.add(delete);
 
@@ -109,7 +112,7 @@ public class UserInterface {
         JMenuItem insert = new JMenuItem("Вставить");
         edit.add(insert);
 
-        insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
+        insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.SHIFT_DOWN_MASK));
         insert.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -128,7 +131,7 @@ public class UserInterface {
         JMenuItem copy = new JMenuItem("Копировать");
         edit.add(copy);
 
-        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.SHIFT_DOWN_MASK));
         copy.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -146,7 +149,7 @@ public class UserInterface {
         edit.add(cut);
 
         // TODO shortcut
-        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
+        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.SHIFT_DOWN_MASK));
         cut.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -173,11 +176,12 @@ public class UserInterface {
         JMenuItem paste = new JMenuItem("Вставить");
         edit.add(paste);
 
-        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.SHIFT_DOWN_MASK));
         paste.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Transferable clipData = clipboard.getContents(this);
+                // TODO проверка буфера
 
                 try {
                     if (clipData != null && clipData.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -199,8 +203,7 @@ public class UserInterface {
             }
         });
 
-
-
+        // ---------------------------------------------------------------
 
 
         menuBar.add(file);
@@ -256,11 +259,15 @@ public class UserInterface {
         buttonDelete.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (shiftDeleteButton.isSelected())
-                    tableModel.getFileManager().removeBytesWithShift(start, end);
-                else
-                    tableModel.getFileManager().removeBytesWithZero(start, end);
-                tableModel.fireTableStructureChanged();
+                try {
+                    if (shiftDeleteButton.isSelected())
+                        tableModel.getFileManager().removeBytesWithShift(start, end);
+                    else
+                        tableModel.getFileManager().removeBytesWithZero(start, end);
+                    tableModel.fireTableStructureChanged();
+                } catch (Exception ex) {
+//                    throw new RuntimeException(ex);
+                }
 
                 // закрываем диалоговое окно
                 dialog.dispose();
@@ -271,6 +278,7 @@ public class UserInterface {
         dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
 
         dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
+        dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
 
@@ -293,10 +301,16 @@ public class UserInterface {
         buttonInsert.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // получаем количество байт для вставки
-                int numberOfBytes = Integer.parseInt(bytesToInsertField.getText());
-                tableModel.getFileManager().insertBytes(position, numberOfBytes);
-                tableModel.fireTableStructureChanged();
+                try {
+                    // получаем количество байт для вставки
+                    int numberOfBytes = Integer.parseInt(bytesToInsertField.getText());
+                    tableModel.getFileManager().insertBytes(position, numberOfBytes);
+                    tableModel.fireTableStructureChanged();
+                }
+                catch (NumberFormatException ex) {
+//                    throw new RuntimeException(ex);
+                }
+
                 // закрываем диалоговое окно
                 dialog.dispose();
             }
@@ -306,6 +320,7 @@ public class UserInterface {
         dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
 
         dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
+        dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
 
@@ -332,12 +347,17 @@ public class UserInterface {
         buttonDelete.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (shiftPasteButton.isSelected())
-                    tableModel.getFileManager().pasteBytesWithShift(start, copiedData);
-                else
-                    tableModel.getFileManager().pasteBytesWithReplacement(start, copiedData);
+                try {
+                    if (shiftPasteButton.isSelected())
+                        tableModel.getFileManager().pasteBytesWithShift(start, copiedData);
+                    else
+                        tableModel.getFileManager().pasteBytesWithReplacement(start, copiedData);
 
-                tableModel.fireTableStructureChanged();
+                    tableModel.fireTableStructureChanged();
+                }
+                catch (Exception ex) {
+//                    throw new RuntimeException(ex);
+                }
 
                 // закрываем диалоговое окно
                 dialog.dispose();
@@ -348,8 +368,48 @@ public class UserInterface {
         dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
 
         dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
+        dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
+
+
+    /*public static void createSearchDialog() {
+        JDialog dialog = new JDialog(frame, "Поиск", true);
+        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        dialog.setLayout(new BorderLayout());
+
+        JLabel labelSearch = new JLabel("Введите строку поиска:");
+        JTextField searchField = new JTextField(25);
+        JPanel panelTop = new JPanel();
+        panelTop.add(labelSearch);
+        panelTop.add(searchField);
+
+        JButton buttonSearch = new JButton("Искать");
+        JPanel panelBottom = new JPanel();
+        panelBottom.add(buttonSearch);
+
+        buttonSearch.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    System.out.println("aa");
+                }
+                catch (NumberFormatException ex) {
+//                    throw new RuntimeException(ex);
+                }
+
+                // закрываем диалоговое окно
+                dialog.dispose();
+            }
+        });
+
+        dialog.add(panelTop, BorderLayout.CENTER);
+        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
+
+        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
+        dialog.setLocationRelativeTo(frame);
+        dialog.setVisible(true);
+    }*/
 
 
     public static JScrollPane createLeftSide() {
@@ -533,7 +593,7 @@ public class UserInterface {
         JPanel rightPanel = new JPanel();
 
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.add(Box.createHorizontalGlue());
+//        rightPanel.add(Box.createHorizontalGlue());
 
         SpinnerModel spinnerModel = new SpinnerNumberModel(table.getColumnCount() - 1, 2, 30, 1);
         JSpinner spinnerColumns = new JSpinner(spinnerModel);
@@ -541,8 +601,6 @@ public class UserInterface {
         JPanel columnsPanel = new JPanel();
         columnsPanel.add(new JLabel("Количество столбцов"));
         columnsPanel.add(spinnerColumns);
-        //columnsPanel.setBounds(10, 50, 50, 50);
-        //columnsPanel.setBounds(BorderFactory.createEmptyBorder(50, 10, 10, 10));
 
         rightPanel.add(columnsPanel);
 
@@ -555,8 +613,8 @@ public class UserInterface {
             }
         });
 
+        // ---------------------------------------------------------------
         JLabel usIntLabel = new JLabel("Unsigned Int");
-        //usIntLabel.setHorizontalAlignment(JLabel.LEFT);
         JLabel sIntLabel = new JLabel("Signed Int");
         JLabel floatLabel = new JLabel("Float");
         JLabel doubleLabel = new JLabel("Double");
@@ -564,38 +622,102 @@ public class UserInterface {
         rightPanel.add(usIntLabel);
         rightPanel.add(usIntField);
         usIntField.setMaximumSize(new Dimension(200, 35));
-        //usIntField.setAlignmentX(Component.CENTER_ALIGNMENT);
         usIntLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
 
         rightPanel.add(sIntLabel);
         rightPanel.add(sIntField);
         sIntField.setMaximumSize(new Dimension(200, 35));
-        //sIntField.setAlignmentX(Component.CENTER_ALIGNMENT);
         sIntLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
 
         rightPanel.add(floatLabel);
         rightPanel.add(floatField);
         floatField.setMaximumSize(new Dimension(200, 35));
-        //floatField.setAlignmentX(Component.CENTER_ALIGNMENT);
         floatLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         rightPanel.add(doubleLabel);
         rightPanel.add(doubleField);
         doubleField.setMaximumSize(new Dimension(200, 35));
-        //doubleField.setAlignmentX(Component.CENTER_ALIGNMENT);
         doubleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        Dimension minSize = new Dimension(5, 200);
+        // ---------------------------------------------------------------
+        JPanel searchPanel = new JPanel();
+        JLabel searchLabel = new JLabel("Строка для поиска:");
+
+        // TODO
+        try {
+            MaskFormatter formatter = new MaskFormatter("[A-F0-9]");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        JTextField searchField = new JTextField(15);
+        JButton buttonSearch = new JButton("Искать");
+        JButton buttonForward = new JButton("Вперед");
+        JButton buttonBackward = new JButton("Назад");
+
+
+        searchPanel.add(searchLabel);
+        searchPanel.add(searchField);
+        searchPanel.add(buttonSearch);
+        searchPanel.add(buttonBackward);
+        searchPanel.add(buttonForward);
+
+
+        buttonSearch.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String stringToSearch = searchField.getText();
+
+                if (!stringToSearch.isEmpty() && tableModel.getFileManager() != null) {
+                    // TODO check input
+                    String[] pattern = stringToSearch.split("\\s+");
+
+                    List<Integer> found = tableModel.getFileManager().findByValue(pattern);
+
+                    for (Integer i : found) {
+                        int row_start = i / (tableModel.getColumnCount() - 1);
+                        int col_start = i % (tableModel.getColumnCount() - 1) + 1;
+
+                        int col_end = (col_start + pattern.length - 1);
+
+                        int row_end = row_start;
+                        if (col_end > tableModel.getColumnCount() - 1) {
+                            row_end = row_start + 1;
+                            col_start = col_end % (tableModel.getColumnCount() - 1);
+                        }
+
+                        // TODO fix bounds
+
+                        //System.out.println("row: " + row_start + " | col: " + col_start + "| end: " + col_end);
+
+                        table.setRowSelectionInterval(row_start, row_end);
+                        table.setColumnSelectionInterval(col_start, col_end);
+                        table.requestFocus();
+                    }
+                }
+            }
+        });
+
+
+
+
+        // ---------------------------------------------------------------
+        Dimension minSize = new Dimension(5, 100);
         Dimension prefSize = new Dimension(5, 300);
-        Dimension maxSize = new Dimension(Short.MAX_VALUE, 100);
+        Dimension maxSize = new Dimension(Short.MAX_VALUE, 500);
 
         rightPanel.add(new Box.Filler(minSize, prefSize, maxSize));
 
+        rightPanel.add(searchPanel);
+
+//        minSize = new Dimension(5, 50);
+//        prefSize = new Dimension(5, 50);
+//        maxSize = new Dimension(Short.MAX_VALUE, 50);
+//        rightPanel.add(new Box.Filler(minSize, prefSize, maxSize));
+
         return rightPanel;
     }
-
 }
 
 // -------------------------------------------------------------------------------------------
@@ -721,7 +843,7 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         // если курсор наведен на ячейку, то подсвечиваем ее
-        if (row == hoverRow && column == hoverCol && !isSelected)
+        if (row == hoverRow && column == hoverCol && !isSelected && column != 0)
             c.setBackground(new Color(156, 197, 255));
         // если ячейка выделена, то ей назначается цвет выделения
         else if (isSelected)

@@ -108,7 +108,7 @@ public class FileManager {
 
             // начиная с позиции вставки записываем нули
             file.seek(start);
-            for (int i = 0; i < number; i++)
+            for (long i = 0; i < number; i++)
                 file.writeByte(0);
 
             // после нулей дописываем все, что было после выделенного байта
@@ -127,11 +127,10 @@ public class FileManager {
 
         try {
             file.seek(start);
-            int end = bytes.length;
 
             // начиная со стартовой позиции заменяем байты на данные из буфера
-            for (int i = 0; i < end; i++)
-                file.writeByte(Integer.parseInt(bytes[i], 16));
+            for (String b : bytes)
+                file.writeByte(Integer.parseInt(b, 16));
         }
         catch (IOException e) {
 //            throw new RuntimeException(e);
@@ -159,8 +158,8 @@ public class FileManager {
 
             // начиная с позиции вставки записываем вставляемые байты
             file.seek(start);
-            for (int i = 0; i < bytes.length; i++)
-                file.writeByte(Integer.parseInt(bytes[i], 16));
+            for (String b : bytes)
+                file.writeByte(Integer.parseInt(b, 16));
 
             // после них дописываем все, что было после позиции вставки
             for (Byte b : toRewrite)
@@ -171,6 +170,56 @@ public class FileManager {
             System.out.println("error during pasting with shift");
         }
     }
+
+
+    public List<Integer> findByValue(String[] pattern) {
+        List<Integer> matchesIndexes = new ArrayList<>();
+
+        try {
+            for (int i = 0; i <= file.length() - pattern.length; i++) {
+                boolean found = true;
+
+                for (int j = 0; j < pattern.length; j++) {
+                    file.seek(i + j);
+
+                    String b = String.format("%02X", file.readByte());
+                    String p = pattern[j];
+
+                    // если в строке поиска есть ?
+                    // ? == 1 любой символ
+                    if (p.indexOf('?') != -1) {
+                        // сравниваем по символам
+                        if (p.charAt(0) == '?' && p.charAt(1) == '?') {
+                            break;
+                        }
+                        else if (p.charAt(0) == '?' && (p.charAt(1) != b.charAt(1))) {
+                            found = false;
+                            break;
+                        }
+                        else if (p.charAt(1) == '?' && (p.charAt(0) != b.charAt(0))) {
+                            found = false;
+                            break;
+                        }
+                    }
+
+                    else if (!b.equals(p)) {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found)
+                    matchesIndexes.add(i);
+            }
+        }
+        catch (IOException e) {
+//            throw new RuntimeException(e);
+            System.out.println("error during search");
+        }
+
+        return matchesIndexes;
+    }
+
 
     public void closeFile() {
         try {
