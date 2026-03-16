@@ -17,20 +17,23 @@ import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 
 public class UserInterface {
 
-    private static JFrame frame = new JFrame("HEX-editor");
-    private static JTable table = new JTable(new MainTableModel());
-    private static MainTableModel tableModel = (MainTableModel) table.getModel();
-    private static TableColumnModel columnModel = table.getColumnModel();
+    private static final JFrame frame = new JFrame("HEX-editor");
+    private static final JTable table = new JTable(new MainTableModel());
+    private static final MainTableModel tableModel = (MainTableModel) table.getModel();
+    private static final TableColumnModel columnModel = table.getColumnModel();
 
-    private static JTextField usIntField = new JTextField(15);
-    private static JTextField sIntField = new JTextField(15);
-    private static JTextField floatField = new JTextField(15);
-    private static JTextField doubleField = new JTextField(15);
+    private static final JTextField usIntField = new JTextField(15);
+    private static final JTextField sIntField = new JTextField(15);
+    private static final JTextField floatField = new JTextField(15);
+    private static final JTextField doubleField = new JTextField(15);
 
     private static int frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
     private static int frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
 
-    private static Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+    private static List<Integer> matches;
+    private static int currentMatchPosition;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -650,11 +653,11 @@ public class UserInterface {
         JLabel searchLabel = new JLabel("Строка для поиска:");
 
         // TODO
-        try {
-            MaskFormatter formatter = new MaskFormatter("[A-F0-9]");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            MaskFormatter formatter = new MaskFormatter("[A-F0-9]");
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
 
 
         JTextField searchField = new JTextField(15);
@@ -672,6 +675,7 @@ public class UserInterface {
         buttonsPanel.add(buttonForward);
 
 
+
         buttonSearch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -681,10 +685,13 @@ public class UserInterface {
                     // TODO check input
                     String[] pattern = stringToSearch.split("\\s+");
 
-                    List<Integer> matches = tableModel.getFileManager().findByValue(pattern);
+                    matches = tableModel.getFileManager().findByValue(pattern);
 
-
-                    // go to match (0)
+                    // переходим к первому найденному совпадению
+                    if (!matches.isEmpty()) {
+                        currentMatchPosition = 0;
+                        goToMatch(matches.get(currentMatchPosition));
+                    }
 
                     /*for (int i : matches) {
                         int row_start = i / (tableModel.getColumnCount() - 1);
@@ -710,12 +717,27 @@ public class UserInterface {
             }
         });
 
-
         buttonForward.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // go to match (cur+1)
-                // if cur = last go to 0
+                if (currentMatchPosition + 1 == matches.size())
+                    currentMatchPosition = 0;
+                else
+                    currentMatchPosition += 1;
+
+                goToMatch(matches.get(currentMatchPosition));
+            }
+        });
+
+        buttonBackward.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentMatchPosition - 1 == -1)
+                    currentMatchPosition = matches.size() - 1;
+                else
+                    currentMatchPosition -= 1;
+
+                goToMatch(matches.get(currentMatchPosition));
             }
         });
 
@@ -733,10 +755,6 @@ public class UserInterface {
 
         rightPanel.add(buttonsPanel);
         rightPanel.add(new Box.Filler(new Dimension(5, 10), new Dimension(5, 10), new Dimension(5, 10)));
-//        minSize = new Dimension(5, 50);
-//        prefSize = new Dimension(5, 50);
-//        maxSize = new Dimension(Short.MAX_VALUE, 50);
-//        rightPanel.add(new Box.Filler(minSize, prefSize, maxSize));
 
         return rightPanel;
     }
@@ -744,22 +762,25 @@ public class UserInterface {
 
     public static void goToMatch(int position) {
         int row = position / (tableModel.getColumnCount() - 1);
+        int row_highlight = position / (tableModel.getColumnCount() - 1);
         int col = position % (tableModel.getColumnCount() - 1) + 1;
 
+        if (row > tableModel.getVisibleRowCount()) {
+            if ((row + tableModel.getVisibleRowCount() < tableModel.getRowCount()))
+                row += tableModel.getVisibleRowCount();
+            else
+
+                row += (tableModel.getRowCount() - row - 1);
+        }
+
+        // переходим к найденному значению
         Rectangle cellRect = table.getCellRect(row, col, true);
         table.scrollRectToVisible(cellRect);
+
+        table.setRowSelectionInterval(row_highlight, row_highlight);
+        table.setColumnSelectionInterval(col, col);
+        table.requestFocus();
     }
-
-    public static void goToNextMatch(int position) {
-
-    }
-
-    public static void goPrevMatch(int position) {
-
-    }
-
-
-
 
 }
 
@@ -803,6 +824,10 @@ class MainTableModel extends AbstractTableModel {
         this.columnCount = newColumnCount + 1;
         setTotalRowCount();
         fireTableStructureChanged();
+    }
+
+    public int getVisibleRowCount() {
+        return this.visibleRowCount;
     }
 
     public void setFileManager(String path) {
