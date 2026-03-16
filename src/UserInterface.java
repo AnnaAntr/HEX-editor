@@ -613,6 +613,12 @@ public class UserInterface {
             }
         });
 
+        Dimension minSize = new Dimension(5, 50);
+        Dimension prefSize = new Dimension(5, 70);
+        Dimension maxSize = new Dimension(5, 100);
+
+        rightPanel.add(new Box.Filler(minSize, prefSize, maxSize));
+
         // ---------------------------------------------------------------
         JLabel usIntLabel = new JLabel("Unsigned Int");
         JLabel sIntLabel = new JLabel("Signed Int");
@@ -660,8 +666,10 @@ public class UserInterface {
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
         searchPanel.add(buttonSearch);
-        searchPanel.add(buttonBackward);
-        searchPanel.add(buttonForward);
+
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.add(buttonBackward);
+        buttonsPanel.add(buttonForward);
 
 
         buttonSearch.addActionListener(new ActionListener() {
@@ -673,9 +681,12 @@ public class UserInterface {
                     // TODO check input
                     String[] pattern = stringToSearch.split("\\s+");
 
-                    List<Integer> found = tableModel.getFileManager().findByValue(pattern);
+                    List<Integer> matches = tableModel.getFileManager().findByValue(pattern);
 
-                    for (Integer i : found) {
+
+                    // go to match (0)
+
+                    /*for (int i : matches) {
                         int row_start = i / (tableModel.getColumnCount() - 1);
                         int col_start = i % (tableModel.getColumnCount() - 1) + 1;
 
@@ -694,8 +705,17 @@ public class UserInterface {
                         table.setRowSelectionInterval(row_start, row_end);
                         table.setColumnSelectionInterval(col_start, col_end);
                         table.requestFocus();
-                    }
+                    }*/
                 }
+            }
+        });
+
+
+        buttonForward.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // go to match (cur+1)
+                // if cur = last go to 0
             }
         });
 
@@ -703,14 +723,16 @@ public class UserInterface {
 
 
         // ---------------------------------------------------------------
-        Dimension minSize = new Dimension(5, 100);
-        Dimension prefSize = new Dimension(5, 300);
-        Dimension maxSize = new Dimension(Short.MAX_VALUE, 500);
+//        Dimension minSize = new Dimension(5, 100);
+//        Dimension prefSize = new Dimension(5, 300);
+//        Dimension maxSize = new Dimension(Short.MAX_VALUE, 500);
 
-        rightPanel.add(new Box.Filler(minSize, prefSize, maxSize));
 
+        rightPanel.add(new Box.Filler(new Dimension(5, 30), new Dimension(5, 30), new Dimension(5, 70)));
         rightPanel.add(searchPanel);
 
+        rightPanel.add(buttonsPanel);
+        rightPanel.add(new Box.Filler(new Dimension(5, 10), new Dimension(5, 10), new Dimension(5, 10)));
 //        minSize = new Dimension(5, 50);
 //        prefSize = new Dimension(5, 50);
 //        maxSize = new Dimension(Short.MAX_VALUE, 50);
@@ -718,6 +740,27 @@ public class UserInterface {
 
         return rightPanel;
     }
+
+
+    public static void goToMatch(int position) {
+        int row = position / (tableModel.getColumnCount() - 1);
+        int col = position % (tableModel.getColumnCount() - 1) + 1;
+
+        Rectangle cellRect = table.getCellRect(row, col, true);
+        table.scrollRectToVisible(cellRect);
+    }
+
+    public static void goToNextMatch(int position) {
+
+    }
+
+    public static void goPrevMatch(int position) {
+
+    }
+
+
+
+
 }
 
 // -------------------------------------------------------------------------------------------
