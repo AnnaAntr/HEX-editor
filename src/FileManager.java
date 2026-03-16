@@ -26,6 +26,7 @@ public class FileManager {
         }
     }
 
+
     public String readOneByte(int position) {
         int b = -1;
 
@@ -40,6 +41,7 @@ public class FileManager {
         return String.format("%02X", b);
     }
 
+
     public void writeOneByte(int position, byte b) {
         try {
             file.seek(position);
@@ -50,6 +52,7 @@ public class FileManager {
             System.out.println("error during writing byte");
         }
     }
+
 
     public void removeBytesWithShift(int start, int end) {
         List<Byte> toRewrite = new ArrayList<>();
@@ -76,6 +79,7 @@ public class FileManager {
         }
     }
 
+
     public void removeBytesWithZero(int start, int end) {
         try {
             // записываем в массив все, что после удаляемого блока
@@ -89,6 +93,7 @@ public class FileManager {
             e.printStackTrace();
         }
     }
+
 
     public void insertBytes(int start, int number) {
         List<Byte> toRewrite = new ArrayList<>();
@@ -121,6 +126,7 @@ public class FileManager {
         }
     }
 
+
     public void pasteBytesWithReplacement(int start, String copiedData) {
         // парсим строку по пробелам
         String[] bytes = copiedData.split("\\s+");
@@ -137,6 +143,7 @@ public class FileManager {
             System.out.println("error during replacing");
         }
     }
+
 
     public void pasteBytesWithShift(int start, String copiedData) {
         // парсим строку по пробелам

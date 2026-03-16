@@ -4,13 +4,11 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
-import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.text.ParseException;
 import java.util.List;
 
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
@@ -59,7 +57,6 @@ public class UserInterface {
         frame.setLocationRelativeTo(null);
 
         frame.setJMenuBar(createMenuBar());
-        table.setComponentPopupMenu(createPopupMenu());
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftSide(), createRightSide());
         splitPane.setDividerLocation((int) (frameWidth * 0.7));
@@ -67,6 +64,7 @@ public class UserInterface {
 
         frame.setVisible(true);
     }
+
 
     public static JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
@@ -115,7 +113,7 @@ public class UserInterface {
         JMenuItem insert = new JMenuItem("Вставить");
         edit.add(insert);
 
-        insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.SHIFT_DOWN_MASK));
+        insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
         insert.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -134,12 +132,12 @@ public class UserInterface {
         JMenuItem copy = new JMenuItem("Копировать");
         edit.add(copy);
 
-        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.SHIFT_DOWN_MASK));
+        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, InputEvent.CTRL_DOWN_MASK));
         copy.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
-                    String selectedValue = getStringOfSelectedCells();
+                    String selectedValue = getStringOfSelectedCells(true);
 
                     StringSelection stringSelection = new StringSelection(selectedValue);
                     clipboard.setContents(stringSelection, null);
@@ -151,8 +149,7 @@ public class UserInterface {
         JMenuItem cut = new JMenuItem("Вырезать");
         edit.add(cut);
 
-        // TODO shortcut
-        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.SHIFT_DOWN_MASK));
+        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
         cut.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -160,7 +157,7 @@ public class UserInterface {
                 int[] selectedColumns = table.getSelectedColumns();
 
                 if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
-                    String selectedValue = getStringOfSelectedCells();
+                    String selectedValue = getStringOfSelectedCells(true);
 
                     StringSelection stringSelection = new StringSelection(selectedValue);
                     Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -179,17 +176,19 @@ public class UserInterface {
         JMenuItem paste = new JMenuItem("Вставить");
         edit.add(paste);
 
-        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.SHIFT_DOWN_MASK));
+        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
         paste.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Transferable clipData = clipboard.getContents(this);
-                // TODO проверка буфера
 
                 try {
                     if (clipData != null && clipData.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                         // получаем данные из буфера в виде строки
                         String copiedData = (String) clipData.getTransferData(DataFlavor.stringFlavor);
+
+                        if (!copiedData.matches("^[A-F0-9\\s+]+$"))
+                            return;
 
                         int[] selectedRows = table.getSelectedRows();
                         int[] selectedColumns = table.getSelectedColumns();
@@ -208,27 +207,10 @@ public class UserInterface {
 
         // ---------------------------------------------------------------
 
-
         menuBar.add(file);
         menuBar.add(edit);
 
         return menuBar;
-    }
-
-
-
-
-
-    public static JPopupMenu createPopupMenu() {
-        JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem popupDelete = new JMenuItem("Удалить");
-        JMenuItem popupInsert = new JMenuItem("Вставить");
-
-        popupMenu.add(popupDelete);
-        popupMenu.add(popupInsert);
-
-
-        return popupMenu;
     }
 
 
@@ -307,7 +289,11 @@ public class UserInterface {
                 try {
                     // получаем количество байт для вставки
                     int numberOfBytes = Integer.parseInt(bytesToInsertField.getText());
+                    if (numberOfBytes < 1)
+                        return;
+
                     tableModel.getFileManager().insertBytes(position, numberOfBytes);
+
                     tableModel.fireTableStructureChanged();
                 }
                 catch (NumberFormatException ex) {
@@ -376,45 +362,6 @@ public class UserInterface {
     }
 
 
-    /*public static void createSearchDialog() {
-        JDialog dialog = new JDialog(frame, "Поиск", true);
-        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        dialog.setLayout(new BorderLayout());
-
-        JLabel labelSearch = new JLabel("Введите строку поиска:");
-        JTextField searchField = new JTextField(25);
-        JPanel panelTop = new JPanel();
-        panelTop.add(labelSearch);
-        panelTop.add(searchField);
-
-        JButton buttonSearch = new JButton("Искать");
-        JPanel panelBottom = new JPanel();
-        panelBottom.add(buttonSearch);
-
-        buttonSearch.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    System.out.println("aa");
-                }
-                catch (NumberFormatException ex) {
-//                    throw new RuntimeException(ex);
-                }
-
-                // закрываем диалоговое окно
-                dialog.dispose();
-            }
-        });
-
-        dialog.add(panelTop, BorderLayout.CENTER);
-        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
-
-        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
-        dialog.setLocationRelativeTo(frame);
-        dialog.setVisible(true);
-    }*/
-
-
     public static JScrollPane createLeftSide() {
         table.setRowHeight(30);
         table.setGridColor(Color.GRAY);
@@ -472,7 +419,7 @@ public class UserInterface {
     }
 
 
-    public static String getStringOfSelectedCells() {
+    public static String getStringOfSelectedCells(boolean sep) {
         int[] selectedRows = table.getSelectedRows();
         int[] selectedColumns = table.getSelectedColumns();
 
@@ -484,7 +431,9 @@ public class UserInterface {
 
             if (value != null) {
                 selectedValue += value;
-                selectedValue += " ";
+
+                if (sep)
+                    selectedValue += " ";
             }
         }
 
@@ -497,18 +446,8 @@ public class UserInterface {
         int[] selectedColumns = table.getSelectedColumns();
 
         if (selectedRows.length == 1 && (selectedColumns.length == 2 || selectedColumns.length == 4 || selectedColumns.length == 8)) {
-            String selectedValue = "";
-            for (int i = 0; i < selectedColumns.length; i++) {
-                int row = selectedRows[0];
-                int column = selectedColumns[i];
-                Object value = table.getValueAt(row, column);
+            String selectedValue = getStringOfSelectedCells(false);
 
-                //System.out.println("row: " + row + " | column: " + column + " | value: " + value);
-                if (value != null) {
-                    selectedValue += value;
-                }
-            }
-            //System.out.println("full value: " + selectedValue);
 
 
 //            long l = Long.parseLong(selectedValue, 16);
@@ -549,7 +488,6 @@ public class UserInterface {
             }
             catch (NumberFormatException e) {
                 System.out.println("Number Format Exception");
-                // TODO handle exception
             }
 
             usIntField.setText(String.valueOf(usInt));
@@ -594,9 +532,7 @@ public class UserInterface {
 
     public static JPanel createRightSide() {
         JPanel rightPanel = new JPanel();
-
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-//        rightPanel.add(Box.createHorizontalGlue());
 
         SpinnerModel spinnerModel = new SpinnerNumberModel(table.getColumnCount() - 1, 2, 30, 1);
         JSpinner spinnerColumns = new JSpinner(spinnerModel);
@@ -610,6 +546,7 @@ public class UserInterface {
         spinnerColumns.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) throws NullPointerException {
+                // получаем значение из спиннера
                 int newValue = (int) spinnerColumns.getModel().getValue();
 
                 tableModel.setColumnCount(newValue);
@@ -619,6 +556,7 @@ public class UserInterface {
         Dimension minSize = new Dimension(5, 50);
         Dimension prefSize = new Dimension(5, 70);
         Dimension maxSize = new Dimension(5, 100);
+        Dimension fieldSize = new Dimension(200, 35);
 
         rightPanel.add(new Box.Filler(minSize, prefSize, maxSize));
 
@@ -630,51 +568,44 @@ public class UserInterface {
 
         rightPanel.add(usIntLabel);
         rightPanel.add(usIntField);
-        usIntField.setMaximumSize(new Dimension(200, 35));
+        usIntField.setMaximumSize(fieldSize);
         usIntLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         rightPanel.add(sIntLabel);
         rightPanel.add(sIntField);
-        sIntField.setMaximumSize(new Dimension(200, 35));
+        sIntField.setMaximumSize(fieldSize);
         sIntLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         rightPanel.add(floatLabel);
         rightPanel.add(floatField);
-        floatField.setMaximumSize(new Dimension(200, 35));
+        floatField.setMaximumSize(fieldSize);
         floatLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         rightPanel.add(doubleLabel);
         rightPanel.add(doubleField);
-        doubleField.setMaximumSize(new Dimension(200, 35));
+        doubleField.setMaximumSize(fieldSize);
         doubleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // ---------------------------------------------------------------
         JPanel searchPanel = new JPanel();
         JLabel searchLabel = new JLabel("Строка для поиска:");
 
-        // TODO
-//        try {
-//            MaskFormatter formatter = new MaskFormatter("[A-F0-9]");
-//        } catch (ParseException e) {
-//            throw new RuntimeException(e);
-//        }
-
-
         JTextField searchField = new JTextField(15);
         JButton buttonSearch = new JButton("Искать");
         JButton buttonForward = new JButton("Вперед");
         JButton buttonBackward = new JButton("Назад");
 
-
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
         searchPanel.add(buttonSearch);
 
+        JPanel infoPanel = new JPanel();
+        JLabel infoLabel = new JLabel("");
+        infoPanel.add(infoLabel);
+
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.add(buttonBackward);
         buttonsPanel.add(buttonForward);
-
-
 
         buttonSearch.addActionListener(new ActionListener() {
             @Override
@@ -682,37 +613,23 @@ public class UserInterface {
                 String stringToSearch = searchField.getText();
 
                 if (!stringToSearch.isEmpty() && tableModel.getFileManager() != null) {
-                    // TODO check input
+                    // проверяем, что строка состоит из допустимых символов
+                    if (!stringToSearch.matches("^[A-F0-9\\s+]+$"))
+                        return;
+
                     String[] pattern = stringToSearch.split("\\s+");
 
                     matches = tableModel.getFileManager().findByValue(pattern);
 
-                    // переходим к первому найденному совпадению
                     if (!matches.isEmpty()) {
+                        // переходим к первому найденному совпадению
                         currentMatchPosition = 0;
                         goToMatch(matches.get(currentMatchPosition));
+
+                        infoLabel.setText("<html><center>Всего найдено: " + matches.size() + "<br>" + currentMatchPosition + " из " + matches.size() + "</center></html>");
                     }
-
-                    /*for (int i : matches) {
-                        int row_start = i / (tableModel.getColumnCount() - 1);
-                        int col_start = i % (tableModel.getColumnCount() - 1) + 1;
-
-                        int col_end = (col_start + pattern.length - 1);
-
-                        int row_end = row_start;
-                        if (col_end > tableModel.getColumnCount() - 1) {
-                            row_end = row_start + 1;
-                            col_start = col_end % (tableModel.getColumnCount() - 1);
-                        }
-
-                        // TODO fix bounds
-
-                        //System.out.println("row: " + row_start + " | col: " + col_start + "| end: " + col_end);
-
-                        table.setRowSelectionInterval(row_start, row_end);
-                        table.setColumnSelectionInterval(col_start, col_end);
-                        table.requestFocus();
-                    }*/
+                    else
+                        infoLabel.setText("Совпадений не найдено");
                 }
             }
         });
@@ -720,10 +637,17 @@ public class UserInterface {
         buttonForward.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (matches.isEmpty())
+                    return;
+
+                // если текущее найденное совпадение последнее, то переходим к первому
                 if (currentMatchPosition + 1 == matches.size())
                     currentMatchPosition = 0;
+                // иначе к следующему
                 else
                     currentMatchPosition += 1;
+
+                infoLabel.setText("<html><center>Всего найдено: " + matches.size() + "<br>" + (currentMatchPosition + 1) + " из " + matches.size() + "</center></html>");
 
                 goToMatch(matches.get(currentMatchPosition));
             }
@@ -732,44 +656,44 @@ public class UserInterface {
         buttonBackward.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (matches.isEmpty())
+                    return;
+
+                // если текущее найденное совпадение первое, то переходим к последнему
                 if (currentMatchPosition - 1 == -1)
                     currentMatchPosition = matches.size() - 1;
+                // иначе к предыдущему
                 else
                     currentMatchPosition -= 1;
+
+                infoLabel.setText("<html><center>Всего найдено: " + matches.size() + "<br>" + (currentMatchPosition + 1) + " из " + matches.size() + "</center></html>");
 
                 goToMatch(matches.get(currentMatchPosition));
             }
         });
 
-
-
-
         // ---------------------------------------------------------------
-//        Dimension minSize = new Dimension(5, 100);
-//        Dimension prefSize = new Dimension(5, 300);
-//        Dimension maxSize = new Dimension(Short.MAX_VALUE, 500);
+        rightPanel.add(new Box.Filler(new Dimension(5, 30), new Dimension(5, 50), new Dimension(5, 100)));
 
-
-        rightPanel.add(new Box.Filler(new Dimension(5, 30), new Dimension(5, 30), new Dimension(5, 70)));
         rightPanel.add(searchPanel);
-
+        rightPanel.add(infoPanel);
         rightPanel.add(buttonsPanel);
-        rightPanel.add(new Box.Filler(new Dimension(5, 10), new Dimension(5, 10), new Dimension(5, 10)));
+
+        rightPanel.add(new Box.Filler(new Dimension(5, 5), new Dimension(5, 100), new Dimension(5, 100)));
 
         return rightPanel;
     }
 
 
     public static void goToMatch(int position) {
-        int row = position / (tableModel.getColumnCount() - 1);
         int row_highlight = position / (tableModel.getColumnCount() - 1);
+        int row = position / (tableModel.getColumnCount() - 1);
         int col = position % (tableModel.getColumnCount() - 1) + 1;
 
         if (row > tableModel.getVisibleRowCount()) {
             if ((row + tableModel.getVisibleRowCount() < tableModel.getRowCount()))
                 row += tableModel.getVisibleRowCount();
             else
-
                 row += (tableModel.getRowCount() - row - 1);
         }
 
@@ -934,17 +858,18 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
             }
         }
 
-        // TODO ??? сломалос...
-        if (value != null) {
-            try {
-                int intValue = Integer.parseInt(value.toString(), 16);
-                byte b = (byte) intValue;
-                String tip = String.valueOf(b) + " \n"  // signed
-                                        + (b & 0xFF);   // unsigned
-                setToolTipText(tip);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Number format exception from tool tip");
+        if (column != 0) {
+            if (value != null)    {
+                try {
+                    int intValue = Integer.parseInt(value.toString(), 16);
+                    byte b = (byte) intValue;
+                    String tip = String.valueOf(b) + " \n"         // signed
+                                                   + (b & 0xFF);   // unsigned
+                    setToolTipText(tip);
+                }
+                catch (NumberFormatException e) {
+                    System.out.println("Number format exception from tool tip");
+                }
             }
         }
 
