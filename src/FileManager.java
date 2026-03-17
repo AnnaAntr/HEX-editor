@@ -12,9 +12,7 @@ public class FileManager {
         try {
             file = new RandomAccessFile(path, "rw");
         }
-        catch (FileNotFoundException e) {
-            System.out.println("error in constructor");
-        }
+        catch (FileNotFoundException e) {}
     }
 
     public long getFileSize() {
@@ -22,7 +20,7 @@ public class FileManager {
             return file.length();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            return 0;
         }
     }
 
@@ -35,7 +33,7 @@ public class FileManager {
             b = file.readByte();
         }
         catch (IOException e) {
-            System.out.println("error during reading byte");
+            return "";
         }
 
         return String.format("%02X", b);
@@ -47,10 +45,7 @@ public class FileManager {
             file.seek(position);
             file.writeByte(b);
         }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during writing byte");
-        }
+        catch (IOException e) {}
     }
 
 
@@ -72,11 +67,7 @@ public class FileManager {
             // обрезаем файл на размер блока
             file.setLength(fileSize - (end - start + 1));
         }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during removing array");
-            e.printStackTrace();
-        }
+        catch (IOException e) {}
     }
 
 
@@ -87,11 +78,7 @@ public class FileManager {
             for (long i = start; i <= end; i++)
                 file.writeByte(0);
         }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during removing array");
-            e.printStackTrace();
-        }
+        catch (IOException e) {}
     }
 
 
@@ -120,10 +107,7 @@ public class FileManager {
             for (Byte b : toRewrite)
                 file.writeByte(b);
         }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during inserting byte");
-        }
+        catch (IOException e) {}
     }
 
 
@@ -138,10 +122,7 @@ public class FileManager {
             for (String b : bytes)
                 file.writeByte(Integer.parseInt(b, 16));
         }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during replacing");
-        }
+        catch (IOException e) {}
     }
 
 
@@ -172,10 +153,7 @@ public class FileManager {
             for (Byte b : toRewrite)
                 file.writeByte(b);
         }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during pasting with shift");
-        }
+        catch (IOException e) {}
     }
 
 
@@ -219,10 +197,7 @@ public class FileManager {
                     matchesIndexes.add(i);
             }
         }
-        catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.out.println("error during search");
-        }
+        catch (IOException e) {}
 
         return matchesIndexes;
     }
@@ -231,9 +206,6 @@ public class FileManager {
     public void closeFile() {
         try {
             file.close();
-        } catch (IOException e) {
-            //throw new RuntimeException(e);
-            System.out.println("error during closing file");
-        }
+        } catch (IOException e) {}
     }
 }

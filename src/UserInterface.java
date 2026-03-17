@@ -25,8 +25,8 @@ public class UserInterface {
     private static final JTextField floatField = new JTextField(15);
     private static final JTextField doubleField = new JTextField(15);
 
-    private static int frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
-    private static int frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
+    private static final int frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
+    private static final int frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
 
     private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
@@ -200,7 +200,7 @@ public class UserInterface {
                     }
                 }
                 catch (UnsupportedFlavorException | IOException ex) {
-                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Не удалось прочитать данные из буфера");
                 }
             }
         });
@@ -251,7 +251,7 @@ public class UserInterface {
                         tableModel.getFileManager().removeBytesWithZero(start, end);
                     tableModel.fireTableStructureChanged();
                 } catch (Exception ex) {
-//                    throw new RuntimeException(ex);
+                    JOptionPane.showMessageDialog(null, "Не удалось удалить данные");
                 }
 
                 // закрываем диалоговое окно
@@ -297,7 +297,7 @@ public class UserInterface {
                     tableModel.fireTableStructureChanged();
                 }
                 catch (NumberFormatException ex) {
-//                    throw new RuntimeException(ex);
+                    JOptionPane.showMessageDialog(null, "Не удалось вставить байты");
                 }
 
                 // закрываем диалоговое окно
@@ -329,11 +329,11 @@ public class UserInterface {
         panelRadio.add(shiftPasteButton);
         panelRadio.add(replacementPasteButton);
 
-        JButton buttonDelete = new JButton("Вставить");
+        JButton buttonPaste = new JButton("Вставить");
         JPanel panelBottom = new JPanel();
-        panelBottom.add(buttonDelete);
+        panelBottom.add(buttonPaste);
 
-        buttonDelete.addActionListener(new ActionListener() {
+        buttonPaste.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
@@ -345,7 +345,7 @@ public class UserInterface {
                     tableModel.fireTableStructureChanged();
                 }
                 catch (Exception ex) {
-//                    throw new RuntimeException(ex);
+                    JOptionPane.showMessageDialog(null, "Не удалось вставить данные из буфера");
                 }
 
                 // закрываем диалоговое окно
@@ -408,7 +408,6 @@ public class UserInterface {
                 Point p = viewport.getViewPosition();
                 int row1 = table.rowAtPoint(p);
                 int row2 = table.rowAtPoint(new Point(p.x, p.y + viewport.getHeight()));
-                //System.out.println(p + " " + row1 + " | " + row2);
 
                 tableModel.setFirstVisibleRow(row1);
                 tableModel.setLastVisibleRow(row2);
@@ -424,10 +423,9 @@ public class UserInterface {
         int[] selectedColumns = table.getSelectedColumns();
 
         String selectedValue = "";
-        for (int i = 0; i < selectedColumns.length; i++) {
-            int row = selectedRows[0];
-            int column = selectedColumns[i];
-            Object value = table.getValueAt(row, column);
+
+        for (int column : selectedColumns) {
+            Object value = table.getValueAt(selectedRows[0], column);
 
             if (value != null) {
                 selectedValue += value;
@@ -448,26 +446,14 @@ public class UserInterface {
         if (selectedRows.length == 1 && (selectedColumns.length == 2 || selectedColumns.length == 4 || selectedColumns.length == 8)) {
             String selectedValue = getStringOfSelectedCells(false);
 
-
-
-//            long l = Long.parseLong(selectedValue, 16);
-//
-//            Float f = Float.intBitsToFloat((int) l);
-//            Double d = Double.longBitsToDouble(l);
-//
-//            usIntField.setText(String.valueOf(Long.parseUnsignedLong(selectedValue, 16)));
-//            sIntField.setText(String.valueOf(Long.valueOf(selectedValue, 16).intValue()));
-//            floatField.setText(String.valueOf(f));
-//            doubleField.setText(String.valueOf(d));
-
             Object usInt = 0, sInt = 0;
+
             float f = 0;
             double d = .0;
 
-            // TODO fix ???
             try {
-                d = Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue());
                 f = Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16));
+                d = Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue());
 
                 switch (selectedColumns.length) {
                     case 2:
@@ -486,40 +472,12 @@ public class UserInterface {
                         break;
                 }
             }
-            catch (NumberFormatException e) {
-                System.out.println("Number Format Exception");
-            }
+            catch (NumberFormatException e) {}
 
             usIntField.setText(String.valueOf(usInt));
             sIntField.setText(String.valueOf(sInt));
             floatField.setText(String.valueOf(f));
             doubleField.setText(String.valueOf(d));
-
-
-            // 2 bytes
-//            selectedValue = "FFFB";
-//            System.out.println("us: " + Integer.parseInt(selectedValue, 16));
-//            System.out.println(" s: " + (short) Integer.parseInt(selectedValue, 16));
-//            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
-//            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
-//
-//            // 4 bytes
-//            selectedValue = "AAAAFFFB";
-//            System.out.println("\nus: " + Long.parseLong(selectedValue, 16));
-//            System.out.println(" s: " + (int) Long.parseLong(selectedValue, 16));
-//            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
-//            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
-//
-//
-//            // 8 bytes
-//            selectedValue = "AAFFFFFAAFFFFFFB";
-//            System.out.println("\nus: " + new BigInteger(selectedValue, 16));
-//            System.out.println(" s: " + new BigInteger(selectedValue, 16).longValue());
-//
-//            System.out.println(" f: " + Float.intBitsToFloat((int) Long.parseLong(selectedValue, 16)));
-//
-//            System.out.println(" d: " + Double.longBitsToDouble(new BigInteger(selectedValue, 16).longValue()));
-
         }
         else {
             usIntField.setText("");
@@ -545,7 +503,7 @@ public class UserInterface {
 
         spinnerColumns.addChangeListener(new ChangeListener() {
             @Override
-            public void stateChanged(ChangeEvent e) throws NullPointerException {
+            public void stateChanged(ChangeEvent e) {
                 // получаем значение из спиннера
                 int newValue = (int) spinnerColumns.getModel().getValue();
 
@@ -614,7 +572,8 @@ public class UserInterface {
 
                 if (!stringToSearch.isEmpty() && tableModel.getFileManager() != null) {
                     // проверяем, что строка состоит из допустимых символов
-                    if (!stringToSearch.matches("^[A-F0-9\\s+]+$"))
+                    // ? = 1 любой символ
+                    if (!stringToSearch.matches("^[A-F0-9?\\s+]+$"))
                         return;
 
                     String[] pattern = stringToSearch.split("\\s+");
@@ -780,10 +739,8 @@ class MainTableModel extends AbstractTableModel {
         if (columnIndex == 0)
             return rowIndex * (columnCount - 1);
 
-
         // если открыт файл
         if (fileManager != null) {
-            // long fileSize = fileManager.getFileSize();
             int position = rowIndex * (columnCount - 1) + columnIndex - 1;
 
             // если последний видимый ряд = -1, то он самый последний в таблице
@@ -853,9 +810,7 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
                 this.hoverRow = table.rowAtPoint(table.getMousePosition());
                 this.hoverCol = table.columnAtPoint(table.getMousePosition());
             }
-            catch (NullPointerException e) {
-                //System.out.println("null point");
-            }
+            catch (NullPointerException e) {}
         }
 
         if (column != 0) {
@@ -867,9 +822,7 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
                                                    + (b & 0xFF);   // unsigned
                     setToolTipText(tip);
                 }
-                catch (NumberFormatException e) {
-                    System.out.println("Number format exception from tool tip");
-                }
+                catch (NumberFormatException e) {}
             }
         }
 
