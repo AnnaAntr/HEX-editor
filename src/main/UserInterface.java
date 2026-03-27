@@ -173,7 +173,7 @@ public class UserInterface {
         });
 
         // ---------------------------------------------------------------
-        JMenuItem paste = new JMenuItem("Вставить");
+        JMenuItem paste = new JMenuItem("Вставить из буфера");
         edit.add(paste);
 
         paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
