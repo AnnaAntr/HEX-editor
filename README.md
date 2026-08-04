@@ -5,7 +5,7 @@
 ## Порядок запуска в Intellij Idea
 1. Клонирование репозитория 
 - File -> New -> Project from Version Control -> GitLab
-- URL проекта на GitLab: http://git.nic.etu/aantrushina/HEX-editor
+- URL проекта на GitLab: http://git.nic.etu/aantrushina/HEX-editor.git
 - После открытия проекта переключение на ветку develop: Remote -> develop -> Checkout
 2. Сборка
 - Build → Build Project
