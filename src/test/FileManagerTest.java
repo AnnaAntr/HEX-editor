@@ -32,7 +32,6 @@ public class FileManagerTest {
         fileManager.closeFile();
     }
 
-    // getFileSize ----------------------------------------------------------
     @Test
     void shouldReturnCorrectFileSize() {
         assertEquals(size, fileManager.getFileSize());
@@ -51,7 +50,6 @@ public class FileManagerTest {
         errorFileManager.closeFile();
     }
 
-    // readOneByte ------------------------------------------------------------
     @Test
     void shouldReadByteAtValidPosition() {
         assertEquals("05", fileManager.readOneByte(5));
@@ -70,7 +68,6 @@ public class FileManagerTest {
         assertEquals("09", fileManager.readOneByte(9));
     }
 
-    // writeOneByte -----------------------------------------------------------
     @Test
     void shouldWriteByteAtPosition() {
         fileManager.writeOneByte(5, (byte) 255);
@@ -91,7 +88,6 @@ public class FileManagerTest {
         assertEquals("F3", fileManager.readOneByte(3));
     }
 
-    // removeBytesWithShift ---------------------------------------------------
     @Test
     void shouldRemoveBytesWithShift() {
         fileManager.removeBytesWithShift(3, 6);
@@ -129,7 +125,6 @@ public class FileManagerTest {
         assertEquals("", fileManager.readOneByte(7));
     }
 
-    // removeBytesWithZero ---------------------------------------------------
     @Test
     void shouldReplaceBytesWithZero() {
         fileManager.removeBytesWithZero(3, 6);
@@ -149,7 +144,6 @@ public class FileManagerTest {
         assertEquals("00", fileManager.readOneByte(5));
     }
 
-    // insertBytes ---------------------------------------------------------
     @Test
     void shouldInsertNullBytes() {
         fileManager.insertBytes(4, 3);
@@ -178,7 +172,6 @@ public class FileManagerTest {
         assertEquals("00", fileManager.readOneByte(11));
     }
 
-    // pasteBytesWithReplacement ----------------------------------------
     @Test
     void shouldReplaceBytesWithNew() {
         fileManager.pasteBytesWithReplacement(3, "AA BB CC");
@@ -200,7 +193,6 @@ public class FileManagerTest {
         assertEquals("BB", fileManager.readOneByte(13));
     }
 
-    // pasteBytesWithShift ------------------------------------------------------------
     @Test
     void shouldPasteBytesWithShift() {
         fileManager.pasteBytesWithShift(4, "AA BB CC");
@@ -230,7 +222,6 @@ public class FileManagerTest {
         assertEquals("09", fileManager.readOneByte(11));
     }
 
-    // findByValue --------------------------------------------------------------------
     @Test
     void shouldFindExactMatch() {
         String[] pattern = {"05", "06"};
