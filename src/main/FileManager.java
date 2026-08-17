@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -7,13 +8,29 @@ import java.util.List;
 public class FileManager {
 
     private RandomAccessFile file;
+    private String filePath;
+    private String fileName;
 
     FileManager(String path) {
+        this.filePath = path;
+        this.fileName = new File(path).getName();
+
         try {
-            file = new RandomAccessFile(path, "rw");
+            this.file = new RandomAccessFile(path, "rw");
         }
         catch (FileNotFoundException e) {}
     }
+
+
+    public String getFileName() {
+        return this.fileName;
+    }
+
+
+    public String getFilePath() {
+        return this.filePath;
+    }
+
 
     public long getFileSize() {
         try {

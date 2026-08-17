@@ -4,10 +4,10 @@ class MainTableModel extends AbstractTableModel {
 
     private int columnCount = 11;
     private final int visibleRowCount = 40;
-    private int totalRowCount = visibleRowCount;
+    private long totalRowCount = visibleRowCount;
 
     private int firstVisibleRow = 0;
-    private int lastVisibleRow = firstVisibleRow + visibleRowCount;
+    private long lastVisibleRow = firstVisibleRow + visibleRowCount;
 
     private FileManager fileManager = null;
 
@@ -19,7 +19,7 @@ class MainTableModel extends AbstractTableModel {
 
             return (int) (fileSize / bytesPerRow) + 1;
         }
-        return 0;
+        return this.visibleRowCount;
     }
 
     public void setTotalRowCount() {
@@ -30,7 +30,7 @@ class MainTableModel extends AbstractTableModel {
         this.firstVisibleRow = firstVisibleRow;
     }
 
-    public void setLastVisibleRow(int lastVisibleRow) {
+    public void setLastVisibleRow(long lastVisibleRow) {
         this.lastVisibleRow = lastVisibleRow;
     }
 
@@ -45,7 +45,12 @@ class MainTableModel extends AbstractTableModel {
     }
 
     public void setFileManager(String path) {
-        this.fileManager = new FileManager(path);
+        if (path != null) {
+            this.fileManager = new FileManager(path);
+        }
+        else {
+            this.fileManager = null;
+        }
         setTotalRowCount();
         fireTableStructureChanged();
     }
@@ -56,7 +61,7 @@ class MainTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return totalRowCount;
+        return (int)totalRowCount;
     }
 
     @Override

@@ -9,49 +9,102 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 
 public class UserInterface {
 
-    private static final JFrame frame = new JFrame("HEX-editor");
-    private static final JTable table = new JTable(new MainTableModel());
-    private static final MainTableModel tableModel = (MainTableModel) table.getModel();
-    private static final TableColumnModel columnModel = table.getColumnModel();
+//    private final JFrame frame = new JFrame("HEX-editor");
+//    private final JTable table = new JTable(new MainTableModel());
+//    private final MainTableModel tableModel = (MainTableModel) table.getModel();
+//    private final TableColumnModel columnModel = table.getColumnModel();
+//
+//    private final JTextField usIntField = new JTextField(15);
+//    private final JTextField sIntField = new JTextField(15);
+//    private final JTextField floatField = new JTextField(15);
+//    private final JTextField doubleField = new JTextField(15);
+//
+//    private final int frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
+//    private final int frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
+//
+//    private final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+//
+//    private List<Integer> matches;
+//    private int currentMatchPosition;
 
-    private static final JTextField usIntField = new JTextField(15);
-    private static final JTextField sIntField = new JTextField(15);
-    private static final JTextField floatField = new JTextField(15);
-    private static final JTextField doubleField = new JTextField(15);
+    private static final String APP_NAME = "HEX-editor";
 
-    private static final int frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
-    private static final int frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
+    private final JFrame frame;
+    private final JTable table;
+    private final MainTableModel tableModel;
+    private final TableColumnModel columnModel;
 
-    private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    private final JTextField usIntField;
+    private final JTextField sIntField;
+    private final JTextField floatField;
+    private final JTextField doubleField;
 
-    private static List<Integer> matches;
-    private static int currentMatchPosition;
+    private final int frameHeight;
+    private final int frameWidth;
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createGUI();
-            }
-        });
+    private final Clipboard clipboard;
+
+    private List<Integer> matches;
+    private int currentMatchPosition;
+
+    public UserInterface() {
+        this.frame = new JFrame(APP_NAME);
+        this.tableModel = new MainTableModel();
+        this.table = new JTable(tableModel);
+        this.columnModel = table.getColumnModel();
+
+        this.usIntField = new JTextField(15);
+        this.usIntField.setEditable(false);
+        this.sIntField = new JTextField(15);
+        this.sIntField.setEditable(false);
+        this.floatField = new JTextField(15);
+        this.floatField.setEditable(false);
+        this.doubleField = new JTextField(15);
+        this.doubleField.setEditable(false);
+
+        this.frameHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
+        this.frameWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.7);
+
+        this.clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+        this.matches = new ArrayList<>();
+        this.currentMatchPosition = 0;
     }
 
-    public static void createGUI() {
+
+
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(new Runnable() {
+//            public void run() {
+//                createGUI();
+//            }
+//        });
+//    }
+
+    public void createGUI() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // при закрытии окна закрываем файл
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                if (tableModel.getFileManager() != null)
+                if (tableModel.getFileManager() != null) {
                     tableModel.getFileManager().closeFile();
+//                    frame.setTitle(APP_NAME);
+//                    tableModel.setFileManager(null);
+                }
             }
         });
 
@@ -68,7 +121,7 @@ public class UserInterface {
     }
 
 
-    public static JMenuBar createMenuBar() {
+    public JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         JFileChooser fileChooser = new JFileChooser();
         JMenu edit = new JMenu("Редактирование");
@@ -87,6 +140,31 @@ public class UserInterface {
                     String filePath = fileChooser.getSelectedFile().getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
 
                     tableModel.setFileManager(filePath);
+                    frame.setTitle(tableModel.getFileManager().getFileName());
+                }
+            }
+        });
+
+        JMenuItem saveAs = new JMenuItem("Сохранить как");
+        file.add(saveAs);
+
+        saveAs.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveFileAs();
+            }
+        });
+
+        JMenuItem close = new JMenuItem("Закрыть");
+        file.add(close);
+
+        close.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (tableModel.getFileManager() != null) {
+                    tableModel.getFileManager().closeFile();
+                    tableModel.setFileManager(null);
+                    frame.setTitle(APP_NAME);
                 }
             }
         });
@@ -202,7 +280,7 @@ public class UserInterface {
                     }
                 }
                 catch (UnsupportedFlavorException | IOException ex) {
-                    JOptionPane.showMessageDialog(null, "Не удалось прочитать данные из буфера");
+                    JOptionPane.showMessageDialog(frame, "Не удалось прочитать данные из буфера");
                 }
             }
         });
@@ -216,7 +294,43 @@ public class UserInterface {
     }
 
 
-    public static void createDeleteDialog(int start, int end, int cut) {
+    public void saveFileAs() {
+        if (tableModel.getFileManager() == null) {
+            JOptionPane.showMessageDialog(frame, "Нет открытого файла");
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File(tableModel.getFileManager().getFileName()));
+
+        if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
+            try {
+                File sourceFile = new File(tableModel.getFileManager().getFilePath());
+                File destFile = fileChooser.getSelectedFile();
+
+                copyFile(sourceFile, destFile);
+
+                tableModel.setFileManager(destFile.getAbsolutePath());
+                frame.setTitle(tableModel.getFileManager().getFileName());
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Не удалось сохранить файл");
+            }
+        }
+    }
+
+
+    private void copyFile(File source, File dest) throws IOException {
+        try (FileInputStream fis = new FileInputStream(source); FileOutputStream fos = new FileOutputStream(dest)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                fos.write(buffer, 0, length);
+            }
+        }
+    }
+
+
+    public void createDeleteDialog(int start, int end, int cut) {
         String title = "Удаление байт";
         if (cut == 1)
             title = "Вырезка байт";
@@ -253,7 +367,7 @@ public class UserInterface {
                         tableModel.getFileManager().removeBytesWithZero(start, end);
                     tableModel.fireTableStructureChanged();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Не удалось удалить данные");
+                    JOptionPane.showMessageDialog(frame, "Не удалось удалить данные");
                 }
 
                 // закрываем диалоговое окно
@@ -270,7 +384,7 @@ public class UserInterface {
     }
 
 
-    public static void createInsertDialog(int position) {
+    public void createInsertDialog(int position) {
         JDialog dialog = new JDialog(frame, "Вставка байт", true);
         dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout());
@@ -299,7 +413,7 @@ public class UserInterface {
                     tableModel.fireTableStructureChanged();
                 }
                 catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Не удалось вставить байты");
+                    JOptionPane.showMessageDialog(frame, "Не удалось вставить байты");
                 }
 
                 // закрываем диалоговое окно
@@ -316,7 +430,7 @@ public class UserInterface {
     }
 
 
-    public static void createPasteDialog(int start, String copiedData) {
+    public void createPasteDialog(int start, String copiedData) {
         JDialog dialog = new JDialog(frame, "Вставка из буфера", true);
         dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout());
@@ -347,7 +461,7 @@ public class UserInterface {
                     tableModel.fireTableStructureChanged();
                 }
                 catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Не удалось вставить данные из буфера");
+                    JOptionPane.showMessageDialog(frame, "Не удалось вставить данные из буфера");
                 }
 
                 // закрываем диалоговое окно
@@ -364,7 +478,7 @@ public class UserInterface {
     }
 
 
-    public static JScrollPane createLeftSide() {
+    public JScrollPane createLeftSide() {
         table.setRowHeight(30);
         table.setGridColor(Color.GRAY);
 
@@ -420,7 +534,7 @@ public class UserInterface {
     }
 
 
-    public static String getStringOfSelectedCells(boolean sep) {
+    public String getStringOfSelectedCells(boolean sep) {
         int[] selectedRows = table.getSelectedRows();
         int[] selectedColumns = table.getSelectedColumns();
 
@@ -441,7 +555,7 @@ public class UserInterface {
     }
 
 
-    public static void showValueOfSelectedCells() {
+    public void showValueOfSelectedCells() {
         int[] selectedRows = table.getSelectedRows();
         int[] selectedColumns = table.getSelectedColumns();
 
@@ -490,7 +604,7 @@ public class UserInterface {
     }
 
 
-    public static JPanel createRightSide() {
+    public JPanel createRightSide() {
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 
@@ -646,7 +760,7 @@ public class UserInterface {
     }
 
 
-    public static void goToMatch(int position) {
+    public void goToMatch(int position) {
         int row_highlight = position / (tableModel.getColumnCount() - 1);
         int row = position / (tableModel.getColumnCount() - 1);
         int col = position % (tableModel.getColumnCount() - 1) + 1;
