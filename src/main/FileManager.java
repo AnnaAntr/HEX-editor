@@ -4,12 +4,29 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class FileManager {
 
     private RandomAccessFile file;
     private String filePath;
     private String fileName;
+
+    private static final Logger logger = Logger.getLogger(FileManager.class.getName());
+
+    static {
+        try {
+            FileHandler fileHandler = new FileHandler("logs.log", true);
+            fileHandler.setFormatter(new SimpleFormatter());
+            logger.addHandler(fileHandler);
+            logger.setUseParentHandlers(false);
+        } catch (IOException e) {
+            System.err.println("Не удалось создать лог-файл: " + e.getMessage());
+        }
+    }
 
     FileManager(String path) {
         this.filePath = path;
@@ -18,7 +35,9 @@ public class FileManager {
         try {
             this.file = new RandomAccessFile(path, "rw");
         }
-        catch (FileNotFoundException e) {}
+        catch (FileNotFoundException e) {
+            logger.log(Level.SEVERE,"Ошибка при открытии файла " + filePath, e);
+        }
     }
 
 
@@ -40,6 +59,7 @@ public class FileManager {
                 return 0;
         }
         catch (IOException e) {
+            logger.log(Level.WARNING,"Ошибка получении размера файла " + filePath, e);
             return 0;
         }
     }
@@ -56,6 +76,7 @@ public class FileManager {
             b = file.read();
         }
         catch (IOException e) {
+            logger.log(Level.WARNING,"Ошибка при чтении байта", e);
             return "";
         }
 
@@ -68,7 +89,9 @@ public class FileManager {
             file.seek(position);
             file.write(b);
         }
-        catch (IOException e) {}
+        catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при записи байта", e);
+        }
     }
 
 
@@ -90,7 +113,9 @@ public class FileManager {
             // обрезаем файл на размер блока
             file.setLength(fileSize - (end - start + 1));
         }
-        catch (IOException e) {}
+        catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при удалении блока байт со сдвигом", e);
+        }
     }
 
 
@@ -101,7 +126,9 @@ public class FileManager {
             for (long i = start; i <= end; i++)
                 file.write(0);
         }
-        catch (IOException e) {}
+        catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при удалении блока байт", e);
+        }
     }
 
 
@@ -127,7 +154,9 @@ public class FileManager {
             for (Integer b : toRewrite)
                 file.write(b);
         }
-        catch (IOException e) {}
+        catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при вставке блока байт", e);
+        }
     }
 
 
@@ -142,7 +171,9 @@ public class FileManager {
             for (String b : bytes)
                 file.write(Integer.parseInt(b, 16));
         }
-        catch (IOException e) {}
+        catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при вставке блока байт с заменой", e);
+        }
     }
 
 
@@ -168,7 +199,9 @@ public class FileManager {
             for (Integer b : toRewrite)
                 file.write(b);
         }
-        catch (IOException e) {}
+        catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при вставке блока байт со сдвигом", e);
+        }
     }
 
 
@@ -212,7 +245,9 @@ public class FileManager {
                     matchesIndexes.add(i);
             }
         }
-        catch (IOException e) {}
+        catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при поиске занчения", e);
+        }
 
         return matchesIndexes;
     }
@@ -222,6 +257,8 @@ public class FileManager {
         try {
             if (file != null)
                 file.close();
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            logger.log(Level.SEVERE,"Ошибка при закрытии файла", e);
+        }
     }
 }

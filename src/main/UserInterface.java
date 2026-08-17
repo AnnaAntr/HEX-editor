@@ -588,7 +588,9 @@ public class UserInterface {
                         break;
                 }
             }
-            catch (NumberFormatException e) {}
+            catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(frame, "Не удалось интерпретировать значение выделенного блока");
+            }
 
             usIntField.setText(String.valueOf(usInt));
             sIntField.setText(String.valueOf(sInt));
