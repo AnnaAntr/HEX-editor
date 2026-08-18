@@ -41,7 +41,7 @@ public class UserInterface {
 //    private List<Integer> matches;
 //    private int currentMatchPosition;
 
-    private static final String APP_NAME = "HEX-editor";
+    public static final String APP_NAME = "HEX-editor";
 
     private final JFrame frame;
     private final JTable table;
@@ -120,361 +120,180 @@ public class UserInterface {
     }
 
 
-    public JMenuBar createMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
-        JFileChooser fileChooser = new JFileChooser();
-        JMenu edit = new JMenu("Редактирование");
+//    public JMenuBar createMenuBar() {
+//        JMenuBar menuBar = new JMenuBar();
+//        JFileChooser fileChooser = new JFileChooser();
+//        JMenu edit = new JMenu("Редактирование");
+//
+//        // ---------------------------------------------------------------
+//        JMenu file = new JMenu("Файл");
+//        JMenuItem open = new JMenuItem("Открыть");
+//        file.add(open);
+//
+//        open.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                int userChoice = fileChooser.showDialog(null, "Открыть");
+//
+//                if (userChoice == JFileChooser.APPROVE_OPTION) {
+//                    String filePath = fileChooser.getSelectedFile().getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
+//
+//                    tableModel.setFileManager(filePath);
+//                    frame.setTitle(tableModel.getFileManager().getFileName());
+//                }
+//            }
+//        });
+//
+//        JMenuItem saveAs = new JMenuItem("Сохранить как");
+//        file.add(saveAs);
+//
+//        saveAs.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                saveFileAs();
+//            }
+//        });
+//
+//        JMenuItem close = new JMenuItem("Закрыть");
+//        file.add(close);
+//
+//        close.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                if (tableModel.getFileManager() != null) {
+//                    tableModel.getFileManager().closeFile();
+//                    tableModel.setFileManager(null);
+//                    frame.setTitle(APP_NAME);
+//                }
+//            }
+//        });
+//
+//        // ---------------------------------------------------------------
+//        JMenuItem delete = new JMenuItem("Удалить");
+//        edit.add(delete);
+//
+//        delete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK));
+//        delete.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                int[] selectedRows = table.getSelectedRows();
+//                int[] selectedColumns = table.getSelectedColumns();
+//
+//                if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
+//                    int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+//                    int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
+//
+//                    createDeleteDialog(start, end, 0);
+//                }
+//            }
+//        });
+//
+//        // ---------------------------------------------------------------
+//        JMenuItem insert = new JMenuItem("Вставить");
+//        edit.add(insert);
+//
+//        insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
+//        insert.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                int[] selectedRows = table.getSelectedRows();
+//                int[] selectedColumns = table.getSelectedColumns();
+//
+//                // реагируем только если выделена 1 ячейка
+//                if (selectedColumns.length == 1 && selectedRows.length == 1 && tableModel.getFileManager() != null) {
+//                    int position = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+//                    createInsertDialog(position);
+//                }
+//            }
+//        });
+//
+//        // ---------------------------------------------------------------
+//        JMenuItem copy = new JMenuItem("Копировать");
+//        edit.add(copy);
+//
+//        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, InputEvent.CTRL_DOWN_MASK));
+//        copy.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
+//                    String selectedValue = getStringOfSelectedCells(true);
+//
+//                    StringSelection stringSelection = new StringSelection(selectedValue);
+//                    clipboard.setContents(stringSelection, null);
+//                }
+//            }
+//        });
+//
+//        // ---------------------------------------------------------------
+//        JMenuItem cut = new JMenuItem("Вырезать");
+//        edit.add(cut);
+//
+//        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
+//        cut.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                int[] selectedRows = table.getSelectedRows();
+//                int[] selectedColumns = table.getSelectedColumns();
+//
+//                if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
+//                    String selectedValue = getStringOfSelectedCells(true);
+//
+//                    StringSelection stringSelection = new StringSelection(selectedValue);
+//                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+//                    clipboard.setContents(stringSelection, null);
+//
+//                    // delete
+//                    int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+//                    int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
+//
+//                    createDeleteDialog(start, end, 1);
+//                }
+//            }
+//        });
+//
+//        // ---------------------------------------------------------------
+//        JMenuItem paste = new JMenuItem("Вставить из буфера");
+//        edit.add(paste);
+//
+//        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
+//        paste.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                Transferable clipData = clipboard.getContents(this);
+//
+//                try {
+//                    if (clipData != null && clipData.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+//                        // получаем данные из буфера в виде строки
+//                        String copiedData = (String) clipData.getTransferData(DataFlavor.stringFlavor);
+//
+//                        if (!copiedData.matches("^[A-F0-9\\s+]+$"))
+//                            return;
+//
+//                        int[] selectedRows = table.getSelectedRows();
+//                        int[] selectedColumns = table.getSelectedColumns();
+//
+//                        if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
+//                            int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
+//                            createPasteDialog(start, copiedData);
+//                        }
+//                    }
+//                }
+//                catch (UnsupportedFlavorException | IOException ex) {
+//                    JOptionPane.showMessageDialog(frame, "Не удалось прочитать данные из буфера");
+//                }
+//            }
+//        });
+//
+//        // ---------------------------------------------------------------
+//
+//        menuBar.add(file);
+//        menuBar.add(edit);
+//
+//        return menuBar;
+//    }
 
-        // ---------------------------------------------------------------
-        JMenu file = new JMenu("Файл");
-        JMenuItem open = new JMenuItem("Открыть");
-        file.add(open);
 
-        open.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int userChoice = fileChooser.showDialog(null, "Открыть");
 
-                if (userChoice == JFileChooser.APPROVE_OPTION) {
-                    String filePath = fileChooser.getSelectedFile().getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
-
-                    tableModel.setFileManager(filePath);
-                    frame.setTitle(tableModel.getFileManager().getFileName());
-                }
-            }
-        });
-
-        JMenuItem saveAs = new JMenuItem("Сохранить как");
-        file.add(saveAs);
-
-        saveAs.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveFileAs();
-            }
-        });
-
-        JMenuItem close = new JMenuItem("Закрыть");
-        file.add(close);
-
-        close.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (tableModel.getFileManager() != null) {
-                    tableModel.getFileManager().closeFile();
-                    tableModel.setFileManager(null);
-                    frame.setTitle(APP_NAME);
-                }
-            }
-        });
-
-        // ---------------------------------------------------------------
-        JMenuItem delete = new JMenuItem("Удалить");
-        edit.add(delete);
-
-        delete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK));
-        delete.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int[] selectedRows = table.getSelectedRows();
-                int[] selectedColumns = table.getSelectedColumns();
-
-                if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
-                    int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
-                    int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
-
-                    createDeleteDialog(start, end, 0);
-                }
-            }
-        });
-
-        // ---------------------------------------------------------------
-        JMenuItem insert = new JMenuItem("Вставить");
-        edit.add(insert);
-
-        insert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
-        insert.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int[] selectedRows = table.getSelectedRows();
-                int[] selectedColumns = table.getSelectedColumns();
-
-                // реагируем только если выделена 1 ячейка
-                if (selectedColumns.length == 1 && selectedRows.length == 1 && tableModel.getFileManager() != null) {
-                    int position = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
-                    createInsertDialog(position);
-                }
-            }
-        });
-
-        // ---------------------------------------------------------------
-        JMenuItem copy = new JMenuItem("Копировать");
-        edit.add(copy);
-
-        copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, InputEvent.CTRL_DOWN_MASK));
-        copy.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
-                    String selectedValue = getStringOfSelectedCells(true);
-
-                    StringSelection stringSelection = new StringSelection(selectedValue);
-                    clipboard.setContents(stringSelection, null);
-                }
-            }
-        });
-
-        // ---------------------------------------------------------------
-        JMenuItem cut = new JMenuItem("Вырезать");
-        edit.add(cut);
-
-        cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
-        cut.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int[] selectedRows = table.getSelectedRows();
-                int[] selectedColumns = table.getSelectedColumns();
-
-                if (table.getSelectedRows().length == 1 && tableModel.getFileManager() != null) {
-                    String selectedValue = getStringOfSelectedCells(true);
-
-                    StringSelection stringSelection = new StringSelection(selectedValue);
-                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                    clipboard.setContents(stringSelection, null);
-
-                    // delete
-                    int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
-                    int end = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[selectedColumns.length - 1] - 1;
-
-                    createDeleteDialog(start, end, 1);
-                }
-            }
-        });
-
-        // ---------------------------------------------------------------
-        JMenuItem paste = new JMenuItem("Вставить из буфера");
-        edit.add(paste);
-
-        paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
-        paste.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Transferable clipData = clipboard.getContents(this);
-
-                try {
-                    if (clipData != null && clipData.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                        // получаем данные из буфера в виде строки
-                        String copiedData = (String) clipData.getTransferData(DataFlavor.stringFlavor);
-
-                        if (!copiedData.matches("^[A-F0-9\\s+]+$"))
-                            return;
-
-                        int[] selectedRows = table.getSelectedRows();
-                        int[] selectedColumns = table.getSelectedColumns();
-
-                        if (selectedRows.length == 1 && tableModel.getFileManager() != null) {
-                            int start = selectedRows[0] * (tableModel.getColumnCount() - 1) + selectedColumns[0] - 1;
-                            createPasteDialog(start, copiedData);
-                        }
-                    }
-                }
-                catch (UnsupportedFlavorException | IOException ex) {
-                    JOptionPane.showMessageDialog(frame, "Не удалось прочитать данные из буфера");
-                }
-            }
-        });
-
-        // ---------------------------------------------------------------
-
-        menuBar.add(file);
-        menuBar.add(edit);
-
-        return menuBar;
-    }
-
-
-    public void saveFileAs() {
-        if (tableModel.getFileManager() == null) {
-            JOptionPane.showMessageDialog(frame, "Нет открытого файла");
-            return;
-        }
-
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setSelectedFile(new File(tableModel.getFileManager().getFileName()));
-
-        if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
-            try {
-                File sourceFile = new File(tableModel.getFileManager().getFilePath());
-                File destFile = fileChooser.getSelectedFile();
-
-                copyFile(sourceFile, destFile);
-
-                tableModel.setFileManager(destFile.getAbsolutePath());
-                frame.setTitle(tableModel.getFileManager().getFileName());
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(frame, "Не удалось сохранить файл");
-            }
-        }
-    }
-
-
-    private void copyFile(File source, File dest) throws IOException {
-        try (FileInputStream fis = new FileInputStream(source); FileOutputStream fos = new FileOutputStream(dest)) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = fis.read(buffer)) > 0) {
-                fos.write(buffer, 0, length);
-            }
-        }
-    }
-
-
-    public void createDeleteDialog(int start, int end, int cut) {
-        String title = "Удаление байт";
-        if (cut == 1)
-            title = "Вырезка байт";
-
-        JDialog dialog = new JDialog(frame, title, true);
-        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        dialog.setLayout(new BorderLayout());
-
-        ButtonGroup buttonGroup = new ButtonGroup();
-        JRadioButton shiftDeleteButton = new JRadioButton("Со сдвигом", true);
-        JRadioButton zeroDeleteButton = new JRadioButton("С обнулением");
-        buttonGroup.add(shiftDeleteButton);
-        buttonGroup.add(zeroDeleteButton);
-
-        JPanel panelRadio = new JPanel();
-        panelRadio.add(shiftDeleteButton);
-        panelRadio.add(zeroDeleteButton);
-
-        String btn = "Удалить";
-        if (cut == 1)
-            btn = "Вырезать";
-
-        JButton buttonDelete = new JButton(btn);
-        JPanel panelBottom = new JPanel();
-        panelBottom.add(buttonDelete);
-
-        buttonDelete.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    if (shiftDeleteButton.isSelected())
-                        tableModel.getFileManager().removeBytesWithShift(start, end);
-                    else
-                        tableModel.getFileManager().removeBytesWithZero(start, end);
-                    tableModel.fireTableStructureChanged();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Не удалось удалить данные");
-                }
-
-                // закрываем диалоговое окно
-                dialog.dispose();
-            }
-        });
-
-        dialog.add(panelRadio, BorderLayout.CENTER);
-        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
-
-        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
-        dialog.setLocationRelativeTo(frame);
-        dialog.setVisible(true);
-    }
-
-
-    public void createInsertDialog(int position) {
-        JDialog dialog = new JDialog(frame, "Вставка байт", true);
-        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        dialog.setLayout(new BorderLayout());
-
-        JLabel labelInsert = new JLabel("Введите количество байт для вставки:");
-        JTextField bytesToInsertField = new JTextField(5);
-        JPanel panelTop = new JPanel();
-        panelTop.add(labelInsert);
-        panelTop.add(bytesToInsertField);
-
-        JButton buttonInsert = new JButton("Вставить");
-        JPanel panelBottom = new JPanel();
-        panelBottom.add(buttonInsert);
-
-        buttonInsert.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    // получаем количество байт для вставки
-                    int numberOfBytes = Integer.parseInt(bytesToInsertField.getText());
-                    if (numberOfBytes < 1)
-                        return;
-
-                    tableModel.getFileManager().insertBytes(position, numberOfBytes);
-
-                    tableModel.fireTableStructureChanged();
-                }
-                catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(frame, "Не удалось вставить байты");
-                }
-
-                // закрываем диалоговое окно
-                dialog.dispose();
-            }
-        });
-
-        dialog.add(panelTop, BorderLayout.CENTER);
-        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
-
-        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
-        dialog.setLocationRelativeTo(frame);
-        dialog.setVisible(true);
-    }
-
-
-    public void createPasteDialog(int start, String copiedData) {
-        JDialog dialog = new JDialog(frame, "Вставка из буфера", true);
-        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        dialog.setLayout(new BorderLayout());
-
-        ButtonGroup buttonGroup = new ButtonGroup();
-        JRadioButton shiftPasteButton = new JRadioButton("Со сдвигом", true);
-        JRadioButton replacementPasteButton = new JRadioButton("С заменой");
-        buttonGroup.add(shiftPasteButton);
-        buttonGroup.add(replacementPasteButton);
-
-        JPanel panelRadio = new JPanel();
-        panelRadio.add(shiftPasteButton);
-        panelRadio.add(replacementPasteButton);
-
-        JButton buttonPaste = new JButton("Вставить");
-        JPanel panelBottom = new JPanel();
-        panelBottom.add(buttonPaste);
-
-        buttonPaste.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    if (shiftPasteButton.isSelected())
-                        tableModel.getFileManager().pasteBytesWithShift(start, copiedData);
-                    else
-                        tableModel.getFileManager().pasteBytesWithReplacement(start, copiedData);
-
-                    tableModel.fireTableStructureChanged();
-                }
-                catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Не удалось вставить данные из буфера");
-                }
-
-                // закрываем диалоговое окно
-                dialog.dispose();
-            }
-        });
-
-        dialog.add(panelRadio, BorderLayout.CENTER);
-        dialog.add(panelBottom, BorderLayout.AFTER_LAST_LINE);
-
-        dialog.setSize((int) (frameWidth * 0.4), (int) (frameHeight * 0.25));
-        dialog.setLocationRelativeTo(frame);
-        dialog.setVisible(true);
-    }
 
 
     public JScrollPane createLeftSide() {
