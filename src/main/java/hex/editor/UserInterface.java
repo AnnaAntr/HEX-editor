@@ -1,3 +1,5 @@
+package hex.editor;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -22,8 +24,8 @@ import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 public class UserInterface {
 
 //    private final JFrame frame = new JFrame("HEX-editor");
-//    private final JTable table = new JTable(new MainTableModel());
-//    private final MainTableModel tableModel = (MainTableModel) table.getModel();
+//    private final JTable table = new JTable(new hex.editor.MainTableModel());
+//    private final hex.editor.MainTableModel tableModel = (hex.editor.MainTableModel) table.getModel();
 //    private final TableColumnModel columnModel = table.getColumnModel();
 //
 //    private final JTextField usIntField = new JTextField(15);
@@ -100,11 +102,8 @@ public class UserInterface {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                if (tableModel.getFileManager() != null) {
+                if (tableModel.getFileManager() != null)
                     tableModel.getFileManager().closeFile();
-//                    frame.setTitle(APP_NAME);
-//                    tableModel.setFileManager(null);
-                }
             }
         });
 

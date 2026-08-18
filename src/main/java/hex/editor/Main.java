@@ -1,3 +1,5 @@
+package hex.editor;
+
 import javax.swing.SwingUtilities;
 
 public class Main {

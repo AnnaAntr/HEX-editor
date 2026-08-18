@@ -1,6 +1,8 @@
+package hex.editor;
+
 import javax.swing.table.AbstractTableModel;
 
-class MainTableModel extends AbstractTableModel {
+public class MainTableModel extends AbstractTableModel {
 
     private int columnCount = 11;
     private final int visibleRowCount = 40;

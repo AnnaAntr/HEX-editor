@@ -1,3 +1,5 @@
+package hex.editor;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,7 +21,7 @@ public class FileManager {
 
     static {
         try {
-            FileHandler fileHandler = new FileHandler("logs.log", true);
+            FileHandler fileHandler = new FileHandler("logs/file_manager.log", true);
             fileHandler.setFormatter(new SimpleFormatter());
             logger.addHandler(fileHandler);
             logger.setUseParentHandlers(false);
@@ -28,7 +30,7 @@ public class FileManager {
         }
     }
 
-    FileManager(String path) {
+    public FileManager(String path) {
         this.filePath = path;
         this.fileName = new File(path).getName();
 

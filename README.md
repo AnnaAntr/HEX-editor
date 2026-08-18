@@ -10,4 +10,4 @@
 2. Сборка
 - Build → Build Project
 3. Запуск
-- ПКМ src/main/UserInterface.java -> Run
+- ПКМ src/main/hex.editor.UserInterface.java -> Run

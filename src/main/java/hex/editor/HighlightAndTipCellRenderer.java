@@ -1,10 +1,31 @@
-import javax.swing.*;
+package hex.editor;
+
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Color;
+import java.io.IOException;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
     private int hoverRow = -1;
     private int hoverCol = -1;
+
+    private static final Logger logger = Logger.getLogger(HighlightAndTipCellRenderer.class.getName());
+
+    static {
+        try {
+            FileHandler fileHandler = new FileHandler("logs/cell_renderer.log", true);
+            fileHandler.setFormatter(new SimpleFormatter());
+            logger.addHandler(fileHandler);
+            logger.setUseParentHandlers(false);
+        } catch (IOException e) {
+            System.err.println("Не удалось создать лог-файл: " + e.getMessage());
+        }
+    }
 
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus,
@@ -31,7 +52,9 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
                 this.hoverRow = table.rowAtPoint(table.getMousePosition());
                 this.hoverCol = table.columnAtPoint(table.getMousePosition());
             }
-            catch (NullPointerException e) {}
+            catch (NullPointerException e) {
+                logger.log(Level.WARNING,"Нулевой указатель мыши" , e);
+            }
         }
 
         if (column != 0) {
@@ -43,7 +66,9 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
                                                    + (b & 0xFF);   // unsigned
                     setToolTipText(tip);
                 }
-                catch (NumberFormatException e) {}
+                catch (NumberFormatException e) {
+                    logger.log(Level.WARNING,"Ошибка при создании подсказки" , e);
+                }
             }
         }
 
