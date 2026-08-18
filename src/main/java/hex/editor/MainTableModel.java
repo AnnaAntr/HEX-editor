@@ -14,7 +14,7 @@ public class MainTableModel extends AbstractTableModel {
     private FileManager fileManager = null;
 
 
-    private int calculateTotalRowCount() {
+    public int calculateTotalRowCount() {
         if (fileManager != null) {
             long fileSize = fileManager.getFileSize();
             int bytesPerRow = columnCount - 1;
