@@ -1,4 +1,4 @@
-package hex.editor;
+package hex.editor.table;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
+public class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
     private int hoverRow = -1;
     private int hoverCol = -1;
 
@@ -33,16 +33,13 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
 
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-        // если курсор наведен на ячейку, то подсвечиваем ее
         if (row == hoverRow && column == hoverCol && !isSelected && column != 0)
             c.setBackground(new Color(156, 197, 255));
-            // если ячейка выделена, то ей назначается цвет выделения
         else if (isSelected)
             c.setBackground(table.getSelectionBackground());
         else
             c.setBackground(table.getBackground());
 
-        // обновление позиции мыши
         if (table.getMousePosition() == null) {
             this.hoverRow = -1;
             this.hoverCol = -1;
@@ -62,8 +59,7 @@ class HighlightAndTipCellRenderer extends DefaultTableCellRenderer {
                 try {
                     int intValue = Integer.parseInt(value.toString(), 16);
                     byte b = (byte) intValue;
-                    String tip = String.valueOf(b) + " \n"         // signed
-                                                   + (b & 0xFF);   // unsigned
+                    String tip = String.valueOf(b) + " \n" + (b & 0xFF);
                     setToolTipText(tip);
                 }
                 catch (NumberFormatException e) {

@@ -1,12 +1,18 @@
 package hex.editor.view;
 
-import hex.editor.MainTableModel;
-
-import javax.swing.*;
-import java.awt.*;
+import hex.editor.table.MainTableModel;
+import javax.swing.JFrame;
+import javax.swing.JDialog;
+import javax.swing.ButtonGroup;
+import javax.swing.JRadioButton;
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 
 public class DialogManager {
@@ -21,7 +27,6 @@ public class DialogManager {
         this.frameHeight = frameHeight;
         this.tableModel = tableModel;
     }
-
 
     public void createDeleteDialog(int start, int end, int cut) {
         String title = "Удаление байт";
@@ -63,7 +68,6 @@ public class DialogManager {
                     JOptionPane.showMessageDialog(frame, "Не удалось удалить данные");
                 }
 
-                // закрываем диалоговое окно
                 dialog.dispose();
             }
         });
@@ -95,7 +99,6 @@ public class DialogManager {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    // получаем количество байт для вставки
                     int numberOfBytes = Integer.parseInt(bytesToInsertField.getText());
                     if (numberOfBytes < 1)
                         return;
@@ -108,7 +111,6 @@ public class DialogManager {
                     JOptionPane.showMessageDialog(frame, "Не удалось вставить байты");
                 }
 
-                // закрываем диалоговое окно
                 dialog.dispose();
             }
         });
@@ -155,7 +157,6 @@ public class DialogManager {
                     JOptionPane.showMessageDialog(frame, "Не удалось вставить данные из буфера");
                 }
 
-                // закрываем диалоговое окно
                 dialog.dispose();
             }
         });
@@ -167,5 +168,4 @@ public class DialogManager {
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
-
 }

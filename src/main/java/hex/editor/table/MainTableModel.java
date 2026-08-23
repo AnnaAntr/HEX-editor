@@ -1,4 +1,6 @@
-package hex.editor;
+package hex.editor.table;
+
+import hex.editor.FileManager;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -73,19 +75,15 @@ public class MainTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        // номер строки
         if (columnIndex == 0)
             return rowIndex * (columnCount - 1);
 
-        // если открыт файл
         if (fileManager != null) {
             int position = rowIndex * (columnCount - 1) + columnIndex - 1;
 
-            // если последний видимый ряд = -1, то он самый последний в таблице
             if (lastVisibleRow == -1)
                 setLastVisibleRow(totalRowCount);
 
-            // если текущий row попадает в [firstVisible - n; lastVisible + n], то читаем из файла
             if (rowIndex >= (firstVisibleRow - visibleRowCount / 2) && rowIndex <= (lastVisibleRow + visibleRowCount / 2)) {
                 if (position < fileManager.getFileSize()) {
                     return fileManager.readOneByte(position);

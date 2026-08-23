@@ -42,16 +42,13 @@ public class FileManager {
         }
     }
 
-
     public String getFileName() {
         return this.fileName;
     }
 
-
     public String getFilePath() {
         return this.filePath;
     }
-
 
     public long getFileSize() {
         try {
@@ -66,9 +63,8 @@ public class FileManager {
         }
     }
 
-
     public String readOneByte(int position) {
-        int b = -1;
+        int b;
 
         try {
             if (position >= file.length() || position < 0)
@@ -85,7 +81,6 @@ public class FileManager {
         return String.format("%02X", b);
     }
 
-
     public void writeOneByte(int position, byte b) {
         try {
             file.seek(position);
@@ -96,23 +91,19 @@ public class FileManager {
         }
     }
 
-
     public void removeBytesWithShift(int start, int end) {
         List<Integer> toRewrite = new ArrayList<>();
 
         try {
             long fileSize = file.length();
-            // записываем в массив все, что после удаляемого блока
             file.seek(end + 1);
             for (long i = end + 1; i < fileSize; i++)
                 toRewrite.add(file.read());
 
-            // перезаписываем файл
             file.seek(start);
             for (Integer b : toRewrite)
                 file.write(b);
 
-            // обрезаем файл на размер блока
             file.setLength(fileSize - (end - start + 1));
         }
         catch (IOException e) {
@@ -120,10 +111,8 @@ public class FileManager {
         }
     }
 
-
     public void removeBytesWithZero(int start, int end) {
         try {
-            // записываем в массив все, что после удаляемого блока
             file.seek(start);
             for (long i = start; i <= end; i++)
                 file.write(0);
@@ -133,26 +122,21 @@ public class FileManager {
         }
     }
 
-
     public void insertBytes(int start, int number) {
         List<Integer> toRewrite = new ArrayList<>();
 
         try {
             long fileSize = file.length();
-            // вставляем на следующую позицию после выделенного байта
             start += 1;
 
-            // запоминаем все, что после выделенного байта
             file.seek(start);
             for (long i = start; i < fileSize ; i++)
                 toRewrite.add(file.read());
 
-            // начиная с позиции вставки записываем нули
             file.seek(start);
             for (long i = 0; i < number; i++)
                 file.write(0);
 
-            // после нулей дописываем все, что было после выделенного байта
             for (Integer b : toRewrite)
                 file.write(b);
         }
@@ -161,15 +145,12 @@ public class FileManager {
         }
     }
 
-
     public void pasteBytesWithReplacement(int start, String copiedData) {
-        // парсим строку по пробелам
         String[] bytes = copiedData.split("\\s+");
 
         try {
             file.seek(start);
 
-            // начиная со стартовой позиции заменяем байты на данные из буфера
             for (String b : bytes)
                 file.write(Integer.parseInt(b, 16));
         }
@@ -178,26 +159,21 @@ public class FileManager {
         }
     }
 
-
     public void pasteBytesWithShift(int start, String copiedData) {
-        // парсим строку по пробелам
         String[] bytes = copiedData.split("\\s+");
         List<Integer> toRewrite = new ArrayList<>();
 
         try {
             long fileSize = file.length();
 
-            // запоминаем все, что после выделенного байта
             file.seek(start);
             for (long i = start; i < fileSize ; i++)
                 toRewrite.add(file.read());
 
-            // начиная с позиции вставки записываем вставляемые байты
             file.seek(start);
             for (String b : bytes)
                 file.writeByte(Integer.parseInt(b, 16));
 
-            // после них дописываем все, что было после позиции вставки
             for (Integer b : toRewrite)
                 file.write(b);
         }
@@ -205,7 +181,6 @@ public class FileManager {
             logger.log(Level.SEVERE,"Ошибка при вставке блока байт со сдвигом", e);
         }
     }
-
 
     public List<Integer> findByValue(String[] pattern) {
         List<Integer> matchesIndexes = new ArrayList<>();
@@ -220,10 +195,7 @@ public class FileManager {
                     String b = String.format("%02X", file.readByte());
                     String p = pattern[j];
 
-                    // если в строке поиска есть ?
-                    // ? == 1 любой символ
                     if (p.indexOf('?') != -1) {
-                        // сравниваем по символам
                         if (p.charAt(0) == '?' && p.charAt(1) == '?') {
                             break;
                         }
@@ -253,7 +225,6 @@ public class FileManager {
 
         return matchesIndexes;
     }
-
 
     public void closeFile() {
         try {
