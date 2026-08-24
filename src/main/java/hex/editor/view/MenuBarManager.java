@@ -124,9 +124,7 @@ public class MenuBarManager {
 
     private JMenu createEditMenu() {
         JMenu editMenu = new JMenu("Редактирование");
-
-
-
+        
         JMenuItem delete = new JMenuItem("Удалить");
         delete.addActionListener(e -> deleteAction());
         delete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK));
